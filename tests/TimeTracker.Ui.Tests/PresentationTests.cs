@@ -82,7 +82,9 @@ public sealed class PresentationTests
                         Assert.Equal("Segoe UI", button.FontFamily.Source);
                         Assert.Equal(14, button.FontSize);
                         Assert.Equal(FontWeights.SemiBold, button.FontWeight);
-                        Assert.True(Assert.IsType<DropShadowEffect>(button.Effect).ShadowDepth >= 3);
+                        var shadow = Assert.IsType<DropShadowEffect>(button.Effect);
+                        Assert.InRange(shadow.ShadowDepth, 0.5, 1.5);
+                        Assert.InRange(shadow.Opacity, 0.1, 0.2);
                     }
 
                     Volatile.Write(ref phase, $"checking the {theme} menu");
@@ -118,6 +120,8 @@ public sealed class PresentationTests
 
                     Volatile.Write(ref phase, $"checking stable {theme} row heights");
                     VerifyStableRowHeight(main);
+                    Volatile.Write(ref phase, $"checking unchanged {theme} focused button borders");
+                    VerifyUnchangedFocusBorder(confirmation);
                 }
             }
             catch (Exception exception) { failure = exception; }
@@ -171,7 +175,9 @@ public sealed class PresentationTests
             Assert.True(menu.ActualWidth > 100);
             foreach (var item in menu.Items.OfType<MenuItem>())
             {
-                Assert.IsType<DropShadowEffect>(item.Effect);
+                var shadow = Assert.IsType<DropShadowEffect>(item.Effect);
+                Assert.InRange(shadow.ShadowDepth, 0.5, 1);
+                Assert.InRange(shadow.Opacity, 0.05, 0.15);
                 Assert.Equal(owner.FontFamily.Source, item.FontFamily.Source);
                 Assert.Equal(owner.FontSize, item.FontSize);
                 Assert.Equal(owner.FontWeight, item.FontWeight);
@@ -224,6 +230,26 @@ public sealed class PresentationTests
         Assert.Equal(Visibility.Visible, total.Visibility);
         Assert.Equal(rowHeight, card.ActualHeight, 3);
         Assert.Equal(windowHeight, window.ActualHeight, 3);
+    }
+
+    /// <summary>Focuses a live button and verifies that focus never changes its normal border color or width.</summary>
+    private static void VerifyUnchangedFocusBorder(Window window)
+    {
+        var host = Assert.IsAssignableFrom<Panel>(window.Content);
+        var button = new Button { Content = "Focus check" };
+        host.Children.Add(button);
+        try
+        {
+            window.Activate();
+            button.Focus();
+            DrainBindings();
+            Assert.True(button.IsKeyboardFocused);
+            var chrome = Assert.IsType<Border>(button.Template.FindName("Chrome", button));
+            Assert.Equal(button.BorderThickness, chrome.BorderThickness);
+            Assert.Equal(SolidColor(button.BorderBrush), SolidColor(chrome.BorderBrush));
+            Assert.NotNull(button.FocusVisualStyle);
+        }
+        finally { host.Children.Remove(button); }
     }
 
     /// <summary>Enumerates a small control's visual tree to inspect its actual rendered label.</summary>

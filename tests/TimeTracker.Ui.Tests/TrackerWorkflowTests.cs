@@ -3,7 +3,9 @@ using System.IO;
 using System.Text.Json;
 using FlaUI.Core;
 using FlaUI.Core.AutomationElements;
+using FlaUI.Core.Input;
 using FlaUI.Core.Tools;
+using FlaUI.Core.WindowsAPI;
 using FlaUI.UIA3;
 using TimeTracker.Core;
 
@@ -125,6 +127,41 @@ public sealed class TrackerWorkflowTests : IDisposable
         ToggleButtons()[0].Invoke();
         WaitUntil(() => ToggleButtons().Length == 2, "Starting a historical card did not create today's entry.");
         Assert.Equal(2, ReadDocument().Entries.Count);
+    }
+
+    /// <summary>Checks real mouse focus cleanup, retained keyboard focus, and names exposed to screen readers.</summary>
+    [Fact]
+    public void MouseActionsReleaseFocusWhileKeyboardActionsKeepAccessibleTargeting()
+    {
+        Launch();
+        var create = Find("NewTracker").AsButton();
+        create.Click();
+        var label = Find("TrackerLabel").AsTextBox();
+        Assert.Equal("Card reference", label.Name);
+        WaitUntil(() => label.Properties.HasKeyboardFocus.Value, "The editor's input lost its initial focus.");
+        label.Text = "FOCUS-1";
+        Find("SaveTracker").AsButton().Click();
+        WaitForTrackerReference("FOCUS-1");
+        WaitUntil(() => !create.Properties.HasKeyboardFocus.Value, "The completed New tracker action retained focus.");
+
+        var toggle = ToggleButtons()[0];
+        Assert.Equal("Start timer for FOCUS-1", toggle.Name);
+        Assert.Equal("Actions for FOCUS-1", Find("TrackerActions").Name);
+        toggle.Click();
+        WaitUntil(() => toggle.Name == "Stop timer for FOCUS-1", "Mouse click did not start the card.");
+        WaitUntil(() => !toggle.Properties.HasKeyboardFocus.Value, "The mouse-clicked timer retained focus.");
+
+        toggle.Focus();
+        Keyboard.Type(VirtualKeyShort.SPACE);
+        WaitUntil(() => toggle.Name == "Start timer for FOCUS-1", "Keyboard activation did not stop the card.");
+        Assert.True(toggle.Properties.HasKeyboardFocus.Value);
+
+        var settings = Find("Settings").AsButton();
+        settings.Click();
+        Find("DarkTheme").AsMenuItem().Click();
+        var preferencesPath = Path.Combine(dataDirectory, "preferences.json");
+        WaitUntil(() => File.Exists(preferencesPath) && JsonSerializer.Deserialize<UserPreferences>(File.ReadAllText(preferencesPath))?.Theme == "Dark", "The mouse-selected theme was not saved.");
+        WaitUntil(() => !settings.Properties.HasKeyboardFocus.Value, "Closing the menu restored focus to its mouse-clicked button.");
     }
 
     /// <summary>Launches a real executable; missing prerequisites fail instead of producing a zero-test success.</summary>

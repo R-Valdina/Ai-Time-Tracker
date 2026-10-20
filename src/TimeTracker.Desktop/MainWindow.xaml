@@ -42,7 +42,7 @@
                         </StackPanel>
                         <StackPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center">
                             <Button Content="⋯" Padding="8,0" HorizontalAlignment="Right" Margin="0,0,0,6"
-                                    Style="{StaticResource RaisedButton}" Click="OpenMenu" AutomationProperties.Name="Tracker actions" AutomationProperties.AutomationId="TrackerActions" ToolTip="Edit, copy, end, or delete">
+                                    Style="{StaticResource RaisedButton}" Click="OpenMenu" AutomationProperties.Name="{Binding AccessibleActionsName}" AutomationProperties.AutomationId="TrackerActions" ToolTip="Edit, copy, end, or delete">
                                 <Button.ContextMenu>
                                     <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
                                         <MenuItem Header="Edit label and color" Click="EditTracker" AutomationProperties.AutomationId="EditTracker" />
@@ -58,7 +58,7 @@
                             </Button>
                             <Button Content="{Binding ToggleText}" IsEnabled="{Binding CanToggle}" Click="ToggleTracker"
                                     MinWidth="100" Style="{StaticResource TimerButton}"
-                                    AutomationProperties.AutomationId="ToggleTimer" AutomationProperties.Name="{Binding ToggleText}" />
+                                    AutomationProperties.AutomationId="ToggleTimer" AutomationProperties.Name="{Binding AccessibleToggleName}" />
                         </StackPanel>
                         <TextBlock Grid.Row="1" Grid.ColumnSpan="3" Margin="0,10,0,0" TextWrapping="Wrap"
                                    Text="{Binding FinalTotal}" FontWeight="SemiBold" AutomationProperties.AutomationId="FinalTotal">
@@ -93,7 +93,7 @@
                 <TextBlock Text="{Binding Summary}" Foreground="{DynamicResource TextSecondary}" Margin="0,8,0,0" FontSize="12" />
             </StackPanel>
             <Button x:Name="NewTrackerButton" Grid.Column="1" Content="+ New tracker" VerticalAlignment="Top" Click="NewTracker"
-                    Style="{StaticResource RaisedButton}" AutomationProperties.AutomationId="NewTracker" ToolTip="Create a tracker (Ctrl+N)" />
+                    Style="{StaticResource RaisedButton}" AutomationProperties.AutomationId="NewTracker" AutomationProperties.Name="New tracker" ToolTip="Create a tracker (Ctrl+N)" />
         </Grid>
         <TextBlock Grid.Row="1" Text="{Binding Message}" TextWrapping="Wrap" Foreground="{DynamicResource WarningText}" Margin="0,0,0,8" AutomationProperties.AutomationId="StorageMessage" />
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -112,7 +112,7 @@
         <Grid Grid.Row="3" Margin="0,12,0,0">
             <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
             <TextBlock Text="Saved locally · Pauses on lock or sleep" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />
-            <Button x:Name="SettingsButton" Grid.Column="1" Content="Settings ▾" Style="{StaticResource RaisedButton}" Click="OpenMenu" AutomationProperties.AutomationId="Settings">
+            <Button x:Name="SettingsButton" Grid.Column="1" Content="Settings ▾" Style="{StaticResource RaisedButton}" Click="OpenMenu" AutomationProperties.AutomationId="Settings" AutomationProperties.Name="Settings">
                 <Button.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="Theme: Follow Windows" Tag="System" Click="ChangeTheme" AutomationProperties.AutomationId="SystemTheme" />

@@ -24,6 +24,8 @@ The UI suite covers create/edit, delete cancellation/confirmation, start/stop/en
 
 WPF presentation regressions also inspect the actual main/editor/confirmation window backgrounds while switching themes, neutral raised creation buttons, green Start/red Stop states, and rounded menu surfaces without the stock icon gutter. Finalized totals must remain visible on the row after reopening. These checks catch styling errors that a saved preference alone cannot detect.
 
+Mouse/keyboard regressions check that completed mouse actions release focus, keyboard activation retains its place, focused buttons keep their normal border, and timer/menu accessibility names identify the card. Shadow strength is checked in both themes. These checks validate UI Automation exposure; a manual Narrator pass is still required to assess the actual spoken experience.
+
 ## Automation in GitHub
 
 `.github/workflows/build-and-test.yml` runs core tests on Linux and builds/tests the app on a Windows runner for pull requests, pushes to main, and manual runs. Result files are uploaded even when tests fail. If the hosted runner cannot provide a usable interactive desktop, investigate that failure and run the Windows suite locally; do not convert it into a silently passing check. Local test execution has no usage fee. Hosted CI is optional and subject to provider terms.
@@ -38,6 +40,7 @@ These exercise real OS behavior that should not be simulated by a passing unit t
 - Close normally with active timers and reopen. All entries must remain with paused totals. Kill the process separately and confirm recovery to the last checkpoint.
 - Run through midnight (or use a temporary, isolated test environment clock). Confirm exact day-boundary stop, visible warning, acknowledgement, and a fresh next-day entry. Avoid changing your work machine's clock.
 - Check light/dark/system themes, Windows preference changes, high contrast, keyboard-only operation, long labels, 125–200% display scaling, row growth, scrolling, maximization, restored placement, and monitor changes.
+- Turn on Windows Narrator with Ctrl+Windows+Enter and navigate with Tab/Shift+Tab. Confirm card-specific Start/Stop and row-menu names, the labeled reference input, menu navigation, dialog focus, and readable ended totals. Disable Narrator with the same shortcut when finished. Speech requires a screen reader; the app does not speak by itself.
 - Try saving into an unwritable isolated folder. Confirm visible errors and the warning before discarding unsaved time on close.
 - Verify copy formats against known totals, including seconds below a whole minute; confirm no rounding up.
 - Test the self-contained release on Windows without the .NET SDK and without internet access; verify shortcuts, update behavior, and retained data.
