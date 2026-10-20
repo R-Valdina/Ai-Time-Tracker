@@ -10,6 +10,7 @@ public partial class TrackerEditor : Window
     public TrackerEditor(string label = "", string? color = null)
     {
         InitializeComponent();
+        ThemeManager.InitializeWindow(this);
         var names = new[] { "Blue — feature", "Red — bug", "Purple — publishing", "Green", "Orange", "Teal" };
         ColorInput.ItemsSource = TrackerColors.All.Select((value, index) => new ColorChoice(names[index], value)).ToArray();
         ColorInput.SelectedIndex = Math.Max(0, TrackerColors.All.ToList().IndexOf(color ?? TrackerColors.All[0]));

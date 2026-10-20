@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <UseWPF>true</UseWPF>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
@@ -11,7 +12,7 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" PrivateAssets="all" />
     <PackageReference Include="FlaUI.UIA3" Version="5.0.0" />
     <ProjectReference Include="../../src/TimeTracker.Core/TimeTracker.Core.csproj" />
-    <ProjectReference Include="../../src/TimeTracker.Desktop/TimeTracker.Desktop.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/TimeTracker.Desktop/TimeTracker.Desktop.csproj" />
     <Using Include="Xunit" />
   </ItemGroup>
 </Project>

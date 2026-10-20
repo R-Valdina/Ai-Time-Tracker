@@ -27,6 +27,7 @@ public partial class MainWindow : Window
         model = new MainViewModel(dataDirectory);
         ThemeManager.Apply(model.Preferences.Theme);
         InitializeComponent();
+        ThemeManager.InitializeWindow(this);
         DataContext = model;
         RestorePlacement();
         timer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Normal, Tick, Dispatcher);
@@ -93,14 +94,14 @@ public partial class MainWindow : Window
     private void CopyTotal(Guid id, bool minutesOnly)
     {
         try { Clipboard.SetText(model.CopyTotal(id, minutesOnly)); }
-        catch (ExternalException) { MessageBox.Show(this, "The clipboard is busy. Please try copying again.", "Time Tracker"); }
+        catch (ExternalException) { MessageDialog.ShowMessage(this, "The clipboard is busy. Please try copying again.", "Time Tracker"); }
     }
 
     /// <summary>Requires explicit confirmation because deletion cannot be undone in the interface.</summary>
     private void DeleteTracker(object sender, RoutedEventArgs e)
     {
         var row = Row(sender);
-        if (MessageBox.Show(this, $"Delete {row.Label} and its recorded time?", "Delete tracker", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes)
+        if (MessageDialog.ShowMessage(this, $"Delete {row.Label} and its recorded time?", "Delete tracker", "Delete"))
         { model.Delete(row.Id); AdjustHeight(); }
     }
 
@@ -173,7 +174,9 @@ public partial class MainWindow : Window
         if (!ready || model.Preferences.ManuallySized || WindowState != WindowState.Normal) return;
         automaticResize = true;
         var rows = Math.Max(1, model.TodayRows.Count) + (HistorySection.IsExpanded ? model.EarlierRows.Count : 0);
-        Height = Math.Clamp(255 + rows * 112, MinHeight, Math.Max(MinHeight, SystemParameters.WorkArea.Height - 40));
+        var visibleRows = model.TodayRows.Concat(HistorySection.IsExpanded ? model.EarlierRows : []).ToArray();
+        var detailHeight = visibleRows.Sum(row => (row.IsEnded ? 28 : 0) + (row.NeedsReview ? 28 : 0));
+        Height = Math.Clamp(255 + rows * 112 + detailHeight, MinHeight, Math.Max(MinHeight, SystemParameters.WorkArea.Height - 40));
         if (Top + Height > SystemParameters.WorkArea.Bottom) Top = Math.Max(SystemParameters.WorkArea.Top, SystemParameters.WorkArea.Bottom - Height);
         automaticResize = false;
     }
@@ -202,7 +205,7 @@ public partial class MainWindow : Window
     /// <summary>Stops timers and warns before closing if the final disk save fails.</summary>
     private void WindowClosing(object? sender, CancelEventArgs e)
     {
-        if (!model.PauseAll() && MessageBox.Show(this, "Your latest time could not be saved. Close anyway?", "Time Tracker — save failed", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes)
+        if (!model.PauseAll() && !MessageDialog.ShowMessage(this, "Your latest time could not be saved. Close anyway?", "Time Tracker — save failed", "Close anyway"))
         { e.Cancel = true; return; }
         var bounds = WindowState == WindowState.Normal ? new Rect(Left, Top, ActualWidth, ActualHeight) : RestoreBounds;
         model.SavePreferences(model.Preferences with { Width = bounds.Width, Height = bounds.Height, Left = bounds.Left, Top = bounds.Top, Maximized = WindowState == WindowState.Maximized });

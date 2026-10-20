@@ -22,7 +22,7 @@ public partial class App : Application
             }
             catch (IOException)
             {
-                MessageBox.Show("Time Tracker is already open, or its data folder is locked. Close the other instance before trying again.", "Time Tracker");
+                MessageDialog.ShowMessage(null, "Time Tracker is already open, or its data folder is locked. Close the other instance before trying again.", "Time Tracker");
                 Shutdown(1);
                 return;
             }
@@ -31,7 +31,7 @@ public partial class App : Application
         }
         catch (Exception exception) when (exception is IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException)
         {
-            MessageBox.Show(exception.Message, "Time Tracker — unable to open data", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageDialog.ShowMessage(null, exception.Message, "Time Tracker — unable to open data");
             Shutdown(1);
         }
     }

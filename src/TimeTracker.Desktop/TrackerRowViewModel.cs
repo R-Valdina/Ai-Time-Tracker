@@ -30,6 +30,10 @@ public sealed class TrackerRowViewModel(TrackerEntry entry, bool running, bool h
     public bool CanToggle => historical || !entry.IsEnded;
     /// <summary>Prevents repeatedly ending an already-finalized row.</summary>
     public bool CanEnd => !entry.IsEnded;
+    /// <summary>Indicates whether to display the finalized timecard summary on this row.</summary>
+    public bool IsEnded => entry.IsEnded;
+    /// <summary>Gets both final timecard formats directly on the retained entry.</summary>
+    public string FinalTotal => $"Total: {TimeDisplay.HoursAndMinutes(entry.Elapsed)} · {TimeDisplay.Minutes(entry.Elapsed)}";
     /// <summary>Indicates that a midnight pause still needs acknowledgement.</summary>
     public bool NeedsReview => entry.NeedsReview;
     /// <summary>Explains the date, ended state, or active state without depending on color.</summary>
@@ -40,7 +44,7 @@ public sealed class TrackerRowViewModel(TrackerEntry entry, bool running, bool h
     {
         entry = updated;
         running = isRunning;
-        foreach (var name in new[] { nameof(Label), nameof(Color), nameof(Total), nameof(TotalMinutes), nameof(AccessibleTotal), nameof(IsRunning), nameof(ToggleText), nameof(CanToggle), nameof(CanEnd), nameof(NeedsReview), nameof(Status) })
+        foreach (var name in new[] { nameof(Label), nameof(Color), nameof(Total), nameof(TotalMinutes), nameof(AccessibleTotal), nameof(IsRunning), nameof(ToggleText), nameof(CanToggle), nameof(CanEnd), nameof(IsEnded), nameof(FinalTotal), nameof(NeedsReview), nameof(Status) })
             Notify(name);
     }
 }

@@ -9,6 +9,8 @@
     <SolidColorBrush x:Key="ControlHover" Color="#35455E" />
     <SolidColorBrush x:Key="ActionSurface" Color="#1D4ED8" />
     <SolidColorBrush x:Key="ActionText" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="StartSurface" Color="#15803D" />
+    <SolidColorBrush x:Key="StopSurface" Color="#B91C1C" />
     <SolidColorBrush x:Key="WarningText" Color="#FCD34D" />
     <SolidColorBrush x:Key="DangerText" Color="#FCA5A5" />
 </ResourceDictionary>

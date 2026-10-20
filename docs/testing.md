@@ -22,9 +22,13 @@ The core suite covers start/pause/resume, overlapping timers, repeated sampling,
 
 The UI suite covers create/edit, delete cancellation/confirmation, start/stop/end, reopened totals, simultaneous timers, close-to-pause, theme persistence, window width restoration, forced termination/checkpoint recovery, and visible midnight warnings/history. It must be executed on Windows before those workflows are considered verified. UI tests require access to an unlocked desktop and UI Automation; do not lock the machine during the run.
 
+WPF presentation regressions also inspect the actual main/editor/confirmation window backgrounds while switching themes, neutral raised creation buttons, green Start/red Stop states, and rounded menu surfaces without the stock icon gutter. Finalized totals must remain visible on the row after reopening. These checks catch styling errors that a saved preference alone cannot detect.
+
 ## Automation in GitHub
 
 `.github/workflows/build-and-test.yml` runs core tests on Linux and builds/tests the app on a Windows runner for pull requests, pushes to main, and manual runs. Result files are uploaded even when tests fail. If the hosted runner cannot provide a usable interactive desktop, investigate that failure and run the Windows suite locally; do not convert it into a silently passing check. Local test execution has no usage fee. Hosted CI is optional and subject to provider terms.
+
+The Windows script adds executed test counts and failure details to the GitHub run summary. A missing result file or zero-test run fails the check. The underlying test failure still fails the job after its summary is written.
 
 ## Required manual Windows release checks
 

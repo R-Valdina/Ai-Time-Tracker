@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 using System.Text.Json;
 using FlaUI.Core;
 using FlaUI.Core.AutomationElements;
@@ -31,9 +32,13 @@ public sealed class TrackerWorkflowTests : IDisposable
         OpenRowMenu("EndTracker");
         WaitUntil(() => !ToggleButtons()[0].IsEnabled, "Ended entry remained startable.");
         Assert.False(ToggleButtons()[0].IsEnabled);
+        var finalTotal = Find("FinalTotal").AsLabel().Text;
+        Assert.StartsWith("Total: ", finalTotal);
+        Assert.False(Find("FinalTotal").IsOffscreen);
         Restart();
         Assert.Equal(total, Find("ElapsedTime").AsLabel().Text);
         Assert.False(ToggleButtons()[0].IsEnabled);
+        Assert.Equal(finalTotal, Find("FinalTotal").AsLabel().Text);
         WaitForTrackerReference("BUG-903");
     }
 
@@ -177,13 +182,12 @@ public sealed class TrackerWorkflowTests : IDisposable
         Find(actionId).AsMenuItem().Invoke();
     }
 
-    /// <summary>Responds to the native confirmation dialog using Windows' stable button identifiers.</summary>
+    /// <summary>Responds to the themed confirmation dialog using stable, language-independent identifiers.</summary>
     private void ConfirmDeletion(bool delete)
     {
         var dialog = Retry.WhileNull(() => window!.ModalWindows.FirstOrDefault(candidate => candidate.Title == "Delete tracker"), timeout: TimeSpan.FromSeconds(10)).Result;
         Assert.NotNull(dialog);
-        // Native MessageBox uses IDYES=6 and IDNO=7 independently of the Windows display language.
-        var button = dialog!.FindFirstDescendant(condition => condition.ByAutomationId(delete ? "6" : "7"));
+        var button = dialog!.FindFirstDescendant(condition => condition.ByAutomationId(delete ? "ConfirmAction" : "CancelAction"));
         Assert.NotNull(button);
         button!.AsButton().Invoke();
         WaitUntil(() => window!.ModalWindows.Length == 0, "Deletion confirmation did not close.");
