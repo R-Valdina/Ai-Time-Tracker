@@ -3,6 +3,7 @@
                     xmlns:desktop="clr-namespace:TimeTracker.Desktop">
     <!-- Shadows belong to empty surface layers, keeping text outside WPF's effect bitmap. -->
     <x:Null x:Key="ButtonSurfaceShadow" />
+    <DropShadowEffect x:Key="RaisedSurfaceShadow" BlurRadius="5" ShadowDepth="1" Opacity="0.16" />
     <DropShadowEffect x:Key="MenuSurfaceShadow" BlurRadius="3" ShadowDepth="0.75" Opacity="0.12" />
     <!-- WPF does not implicitly apply a Window style to derived MainWindow/TrackerEditor types. -->
     <Style x:Key="AppWindow" TargetType="Window">
@@ -62,7 +63,7 @@
     </Style>
     <Style x:Key="RaisedButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
         <Style.Resources>
-            <DropShadowEffect x:Key="ButtonSurfaceShadow" BlurRadius="5" ShadowDepth="1" Opacity="0.16" />
+            <StaticResource x:Key="ButtonSurfaceShadow" ResourceKey="RaisedSurfaceShadow" />
         </Style.Resources>
     </Style>
     <Style x:Key="TimerButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">

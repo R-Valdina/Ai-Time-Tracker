@@ -64,3 +64,7 @@ UI regressions also verify friendly collection names exposed to Narrator and the
 Narrator regression coverage inspects the actual `DataItem` peers WPF generates for tracker objects, including renaming and moving an entry into history. Their names must be `Tracker <card reference>`, never a .NET namespace/type name. The enclosing scroll area also has an explicit `Trackers` name. Check these items with Narrator hover/navigation as well as the Tab-accessible buttons.
 
 Raised button and menu-item shadows must affect only empty background surfaces. Presentation regressions walk each rendered label's ancestors and reject effects on the text path, preventing softened Settings/New tracker/menu text.
+
+The presentation pass checks every visible main-window, editor, and confirmation button plus Settings and row-action menus in both themes. Timer labels are also checked in Start, Stop, and Ended states.
+
+Tracker rows share the subtle raised-surface shadow used by action buttons. Their background layer must be empty, with no effects on references, timers, totals, or descriptions. History uses the same row template and styling.

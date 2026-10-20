@@ -108,11 +108,13 @@ public sealed class PresentationTests
                     Assert.Equal(Palette("StartSurface"), SolidColor(toggle.Background));
                     Assert.Equal(Palette("ActionText"), SolidColor(toggle.Foreground));
                     VerifyLabelForeground(toggle);
+                    VerifyTextOutsideEffects(toggle);
                     row.Refresh(entry, true);
                     DrainBindings();
                     Assert.Equal(Palette("StopSurface"), SolidColor(toggle.Background));
                     Assert.Equal(Palette("ActionText"), SolidColor(toggle.Foreground));
                     VerifyLabelForeground(toggle);
+                    VerifyTextOutsideEffects(toggle);
                     toggle.IsEnabled = false;
                     DrainBindings();
                     Assert.Equal(Palette("EndedSurface"), SolidColor(toggle.Background));
@@ -122,11 +124,14 @@ public sealed class PresentationTests
                     var chrome = Assert.IsType<Border>(toggle.Template.FindName("Chrome", toggle));
                     Assert.Equal(1, chrome.Opacity);
                     VerifyLabelForeground(toggle, "TextPrimary");
+                    VerifyTextOutsideEffects(toggle);
 
                     Volatile.Write(ref phase, $"checking stable {theme} row heights");
                     VerifyStableRowHeight(main);
                     Volatile.Write(ref phase, $"checking unchanged {theme} focused button borders");
                     VerifyUnchangedFocusBorder(confirmation);
+                    Volatile.Write(ref phase, $"checking every {theme} button and menu label");
+                    foreach (var window in new Window[] { main, editor, confirmation }) VerifySharpButtonsAndMenus(window);
                 }
             }
             catch (Exception exception) { failure = exception; }
@@ -194,7 +199,7 @@ public sealed class PresentationTests
             Assert.Equal(Palette("RowSurface"), SolidColor(surface.Background));
             Assert.IsType<ScrollViewer>(surface.Child);
             Assert.True(menu.ActualWidth > 100);
-            foreach (var item in menu.Items.OfType<MenuItem>())
+            foreach (var item in menu.Items.OfType<MenuItem>().Where(item => item.IsVisible))
             {
                 Assert.Null(item.Effect);
                 item.ApplyTemplate();
@@ -212,8 +217,22 @@ public sealed class PresentationTests
         finally { menu.IsOpen = false; }
     }
 
+    /// <summary>Checks actual main-window, editor, confirmation, timer, and row-menu controls through their shared templates.</summary>
+    private static void VerifySharpButtonsAndMenus(Window window)
+    {
+        window.UpdateLayout();
+        var buttons = Descendants(window).OfType<Button>().Where(button => button.IsVisible).ToArray();
+        Assert.NotEmpty(buttons);
+        foreach (var button in buttons)
+        {
+            Assert.Null(button.Effect);
+            VerifyTextOutsideEffects(button);
+            if (button.ContextMenu is { } menu) VerifyMenu(menu, button);
+        }
+    }
+
     /// <summary>Requires rendered labels to have no effect-bearing ancestor that would rasterize their glyphs.</summary>
-    private static void VerifyTextOutsideEffects(Control control)
+    private static void VerifyTextOutsideEffects(FrameworkElement control)
     {
         var labels = Descendants(control).Where(element => element is TextBlock or AccessText).ToArray();
         Assert.NotEmpty(labels);
@@ -222,7 +241,6 @@ public sealed class PresentationTests
             for (DependencyObject? ancestor = label; ancestor is not null; ancestor = VisualTreeHelper.GetParent(ancestor))
             {
                 if (ancestor is UIElement element) Assert.Null(element.Effect);
-                if (ReferenceEquals(ancestor, control)) break;
             }
         }
     }
@@ -259,6 +277,14 @@ public sealed class PresentationTests
         window.UpdateLayout();
         var row = model.TodayRows.Last();
         var card = Descendants(window).OfType<Border>().Single(border => border.Name == "TrackerCard" && ReferenceEquals(border.DataContext, row));
+        var surface = Descendants(card).OfType<Border>().Single(border => border.Name == "TrackerSurface");
+        Assert.Null(surface.Child);
+        var shadow = Assert.IsType<DropShadowEffect>(surface.Effect);
+        var sharedShadow = Assert.IsType<DropShadowEffect>(Application.Current.FindResource("RaisedSurfaceShadow"));
+        Assert.Equal(sharedShadow.BlurRadius, shadow.BlurRadius);
+        Assert.Equal(sharedShadow.ShadowDepth, shadow.ShadowDepth);
+        Assert.Equal(sharedShadow.Opacity, shadow.Opacity);
+        VerifyTextOutsideEffects(card);
         var total = Descendants(card).OfType<TextBlock>().Single(text => AutomationProperties.GetAutomationId(text) == "FinalTotal");
         Assert.Equal(Visibility.Hidden, total.Visibility);
         var rowHeight = card.ActualHeight;
