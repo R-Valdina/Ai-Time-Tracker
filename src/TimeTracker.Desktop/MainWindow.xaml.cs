@@ -182,7 +182,7 @@ public partial class MainWindow : Window
         var rows = Math.Max(1, model.TodayRows.Count) + (HistorySection.IsExpanded ? model.EarlierRows.Count : 0);
         var visibleRows = model.TodayRows.Concat(HistorySection.IsExpanded ? model.EarlierRows : []).ToArray();
         var detailHeight = visibleRows.Count(row => row.NeedsReview) * 28;
-        Height = Math.Clamp(255 + rows * 160 + detailHeight, MinHeight, Math.Max(MinHeight, SystemParameters.WorkArea.Height - 40));
+        Height = Math.Clamp(255 + rows * 170 + detailHeight, MinHeight, Math.Max(MinHeight, SystemParameters.WorkArea.Height - 40));
         if (Top + Height > SystemParameters.WorkArea.Bottom) Top = Math.Max(SystemParameters.WorkArea.Top, SystemParameters.WorkArea.Bottom - Height);
         automaticResize = false;
     }

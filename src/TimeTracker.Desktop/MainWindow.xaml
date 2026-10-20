@@ -26,7 +26,7 @@
                         </Grid.ColumnDefinitions>
                         <!-- Reserve total and description space so End and editing notes keep row heights consistent. -->
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" MinHeight="60" />
+                            <RowDefinition Height="Auto" MinHeight="68" />
                             <RowDefinition Height="Auto" MinHeight="22" />
                             <RowDefinition Height="36" />
                             <RowDefinition Height="Auto" />
