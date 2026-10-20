@@ -2,6 +2,7 @@ using System.IO;
 using System.Runtime.ExceptionServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Threading;
@@ -62,15 +63,20 @@ public sealed class PresentationTests
                     VerifyMenu(settings!.ContextMenu!, settings);
                     var entry = new TrackerEntry(Guid.NewGuid(), "COLOR-1", TrackerColors.All[0], new DateOnly(2026, 10, 20), TimeSpan.Zero);
                     var row = new TrackerRowViewModel(entry, false, false);
-                    var toggle = new Button { DataContext = row, Style = (Style)application.FindResource("TimerButton") };
+                    var toggle = new Button { Content = "Start", DataContext = row, Style = (Style)application.FindResource("TimerButton") };
                     toggle.ApplyTemplate();
+                    toggle.Measure(new Size(120, 40));
+                    toggle.Arrange(new Rect(0, 0, 120, 40));
+                    toggle.UpdateLayout();
                     DrainBindings();
                     Assert.Equal(Palette("StartSurface"), SolidColor(toggle.Background));
                     Assert.Equal(Palette("ActionText"), SolidColor(toggle.Foreground));
+                    VerifyLabelForeground(toggle);
                     row.Refresh(entry, true);
                     DrainBindings();
                     Assert.Equal(Palette("StopSurface"), SolidColor(toggle.Background));
                     Assert.Equal(Palette("ActionText"), SolidColor(toggle.Foreground));
+                    VerifyLabelForeground(toggle);
                     toggle.IsEnabled = false;
                     Assert.Equal(Palette("RowSurface"), SolidColor(toggle.Background));
                 }
@@ -131,6 +137,26 @@ public sealed class PresentationTests
 
     /// <summary>Requires a concrete brush so unresolved window/control styles fail explicitly.</summary>
     private static Color SolidColor(Brush brush) => Assert.IsType<SolidColorBrush>(brush).Color;
+
+    /// <summary>Checks rendered label elements, which can override a correct Button.Foreground through implicit text styles.</summary>
+    private static void VerifyLabelForeground(DependencyObject parent)
+    {
+        var text = Descendants(parent).Where(element => element is TextBlock or AccessText).ToArray();
+        Assert.NotEmpty(text);
+        foreach (var element in text)
+            Assert.Equal(Palette("ActionText"), SolidColor((Brush)element.GetValue(TextElement.ForegroundProperty)));
+    }
+
+    /// <summary>Enumerates a small control's visual tree to inspect its actual rendered label.</summary>
+    private static IEnumerable<DependencyObject> Descendants(DependencyObject parent)
+    {
+        for (var index = 0; index < VisualTreeHelper.GetChildrenCount(parent); index++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, index);
+            yield return child;
+            foreach (var descendant in Descendants(child)) yield return descendant;
+        }
+    }
 
     /// <summary>Processes queued bindings and loaded handlers on the dedicated WPF STA thread.</summary>
     private static void DrainBindings() => Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);

@@ -25,6 +25,10 @@ function Write-TestSummary {
             if ($test.outcome -eq 'Failed') {
                 $lines += @("#### $($test.testName)", '', '~~~text', [string]$test.Output.ErrorInfo.Message,
                     [string]$test.Output.ErrorInfo.StackTrace, '~~~', '')
+                # Annotations expose actionable failures alongside the job status, preserving the full TRX artifact.
+                $annotation = "$($test.testName)`n$($test.Output.ErrorInfo.Message)`n$($test.Output.ErrorInfo.StackTrace)"
+                $annotation = $annotation.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+                Write-Host "::error::$annotation"
             }
         }
         Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ($lines -join [Environment]::NewLine)
