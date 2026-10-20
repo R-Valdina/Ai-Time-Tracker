@@ -1,0 +1,119 @@
+<Window x:Class="TimeTracker.Desktop.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Time Tracker" Icon="Assets/time-tracker.ico" Width="580" Height="400" MinWidth="520" MinHeight="260"
+        AutomationProperties.AutomationId="TimeTrackerWindow">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanVisibility" />
+        <!-- One shared row template serves both today's entries and retained history. -->
+        <DataTemplate x:Key="TrackerRow">
+            <Border Margin="0,0,0,12" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource ControlBorder}">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="{DynamicResource RowSurface}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsRunning}" Value="True"><Setter Property="Background" Value="{DynamicResource RunningSurface}" /></DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Border BorderBrush="{Binding Color}" BorderThickness="6,0,0,0" CornerRadius="7" Padding="14,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" MinWidth="100" />
+                            <ColumnDefinition Width="135" />
+                            <ColumnDefinition Width="110" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions><RowDefinition /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                        <StackPanel VerticalAlignment="Center" Margin="0,0,8,0">
+                            <TextBlock Text="{Binding Label}" FontSize="17" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding Label}" />
+                            <TextBlock Text="{Binding Status}" Margin="0,5,0,0" FontSize="12" Foreground="{DynamicResource TextSecondary}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Total}" FontSize="23" FontWeight="SemiBold"
+                                       AutomationProperties.AutomationId="ElapsedTime" AutomationProperties.Name="{Binding AccessibleTotal}" />
+                            <TextBlock Text="{Binding TotalMinutes}" Margin="0,3,0,0" FontSize="12" Foreground="{DynamicResource TextSecondary}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" HorizontalAlignment="Right">
+                            <Button Content="⋯" Padding="8,0" HorizontalAlignment="Right" Margin="0,0,0,6"
+                                    Click="OpenMenu" AutomationProperties.Name="Tracker actions" AutomationProperties.AutomationId="TrackerActions" ToolTip="Edit, copy, end, or delete">
+                                <Button.ContextMenu>
+                                    <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                        <MenuItem Header="Edit label and color" Click="EditTracker" AutomationProperties.AutomationId="EditTracker" />
+                                        <Separator />
+                                        <MenuItem Header="Copy hours and minutes" Click="CopyHours" AutomationProperties.AutomationId="CopyHours" />
+                                        <MenuItem Header="Copy total minutes" Click="CopyMinutes" AutomationProperties.AutomationId="CopyMinutes" />
+                                        <MenuItem Header="End entry" Click="EndTracker" IsEnabled="{Binding CanEnd}" AutomationProperties.AutomationId="EndTracker" />
+                                        <MenuItem Header="Mark midnight warning reviewed" Click="ReviewTracker" Visibility="{Binding NeedsReview, Converter={StaticResource BooleanVisibility}}" />
+                                        <Separator />
+                                        <MenuItem Header="Delete" Click="DeleteTracker" Foreground="{DynamicResource DangerText}" AutomationProperties.AutomationId="DeleteTracker" />
+                                    </ContextMenu>
+                                </Button.ContextMenu>
+                            </Button>
+                            <Button Content="{Binding ToggleText}" IsEnabled="{Binding CanToggle}" Click="ToggleTracker"
+                                    MinWidth="100" AutomationProperties.AutomationId="ToggleTimer" AutomationProperties.Name="{Binding ToggleText}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource ActionSurface}" />
+                                                <Setter Property="Foreground" Value="{DynamicResource ActionText}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                        <TextBlock Grid.Row="1" Grid.ColumnSpan="3" Margin="0,10,0,0" TextWrapping="Wrap"
+                                   Text="⚠ Paused at midnight — review time" Foreground="{DynamicResource WarningText}"
+                                   Visibility="{Binding NeedsReview, Converter={StaticResource BooleanVisibility}}" />
+                    </Grid>
+                </Border>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+            <RowDefinition Height="*" /><RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid Margin="0,0,0,14">
+            <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="Today" FontSize="26" FontWeight="Bold" />
+                <TextBlock Text="{Binding DateHeading}" Foreground="{DynamicResource TextSecondary}" Margin="0,3,0,0" />
+                <TextBlock Text="{Binding Summary}" Foreground="{DynamicResource TextSecondary}" Margin="0,8,0,0" FontSize="12" />
+            </StackPanel>
+            <Button Grid.Column="1" Content="+ New tracker" VerticalAlignment="Top" Click="NewTracker"
+                    Style="{StaticResource PrimaryButton}" AutomationProperties.AutomationId="NewTracker" ToolTip="Create a tracker (Ctrl+N)" />
+        </Grid>
+        <TextBlock Grid.Row="1" Text="{Binding Message}" TextWrapping="Wrap" Foreground="{DynamicResource WarningText}" Margin="0,0,0,8" AutomationProperties.AutomationId="StorageMessage" />
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+                <Border Padding="16" BorderThickness="1" CornerRadius="8" BorderBrush="{DynamicResource ControlBorder}" Margin="0,0,0,12"
+                        Visibility="{Binding IsEmpty, Converter={StaticResource BooleanVisibility}}">
+                    <TextBlock Text="Add a card reference to start tracking. Your time stays on this device." TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}" />
+                </Border>
+                <ItemsControl ItemsSource="{Binding TodayRows}" ItemTemplate="{StaticResource TrackerRow}" AutomationProperties.AutomationId="TodayTrackers" />
+                <Expander x:Name="HistorySection" Header="{Binding HistoryHeading}" Margin="0,4,0,0"
+                          Foreground="{DynamicResource TextPrimary}" Expanded="HistoryExpanded" Collapsed="HistoryExpanded">
+                    <ItemsControl ItemsSource="{Binding EarlierRows}" ItemTemplate="{StaticResource TrackerRow}" Margin="0,12,0,0" AutomationProperties.AutomationId="EarlierTrackers" />
+                </Expander>
+            </StackPanel>
+        </ScrollViewer>
+        <Grid Grid.Row="3" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+            <TextBlock Text="Saved locally · Pauses on lock or sleep" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />
+            <Button Grid.Column="1" Content="Settings ▾" Padding="8,5" Click="OpenMenu" AutomationProperties.AutomationId="Settings">
+                <Button.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Theme: Follow Windows" Tag="System" Click="ChangeTheme" AutomationProperties.AutomationId="SystemTheme" />
+                        <MenuItem Header="Theme: Light" Tag="Light" Click="ChangeTheme" AutomationProperties.AutomationId="LightTheme" />
+                        <MenuItem Header="Theme: Dark" Tag="Dark" Click="ChangeTheme" AutomationProperties.AutomationId="DarkTheme" />
+                        <Separator />
+                        <MenuItem Header="Open data folder" Click="OpenDataFolder" />
+                    </ContextMenu>
+                </Button.ContextMenu>
+            </Button>
+        </Grid>
+    </Grid>
+</Window>

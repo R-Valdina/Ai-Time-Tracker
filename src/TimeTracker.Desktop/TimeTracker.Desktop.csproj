@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AssemblyName>TimeTracker</AssemblyName>
+    <Product>Time Tracker</Product>
+    <Description>Offline daily card time tracking.</Description>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets/time-tracker.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../TimeTracker.Core/TimeTracker.Core.csproj" />
+    <Resource Include="Assets/time-tracker.ico" />
+    <Content Include="../../LICENSE" Link="LICENSE" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../../docs/third-party-notices.md" Link="THIRD-PARTY-NOTICES.md" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <!-- Self-contained distributions must retain each resolved runtime pack's upstream notices. -->
+  <Target Name="IncludeRuntimeNotices" AfterTargets="Publish" Condition="'$(SelfContained)' == 'true'">
+    <ItemGroup>
+      <_RuntimeNotice Include="%(ResolvedRuntimePack.PackageDirectory)/LICENSE*;%(ResolvedRuntimePack.PackageDirectory)/THIRD-PARTY-NOTICES*">
+        <PackageName>%(ResolvedRuntimePack.Identity)</PackageName>
+      </_RuntimeNotice>
+    </ItemGroup>
+    <Copy SourceFiles="@(_RuntimeNotice)" DestinationFiles="@(_RuntimeNotice->'$(PublishDir)licenses/%(PackageName)/%(Filename)%(Extension)')" />
+  </Target>
+</Project>

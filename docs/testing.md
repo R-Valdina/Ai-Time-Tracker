@@ -1,0 +1,41 @@
+# Testing standards
+
+Behavior changes require relevant tests; bug fixes require a regression that fails without the fix. Do not disable assertions, silently skip required tests, or report a zero-test run as validation. A passing cross-build is not a Windows runtime test.
+
+## Local commands
+
+From the repository root, run:
+
+```powershell
+# Build every project and run the core suite.
+./scripts/Test.ps1
+
+# Also run FlaUI against a real app window on Windows.
+./scripts/Test.ps1 -IncludeUi
+```
+
+Or use `dotnet test tests/TimeTracker.Core.Tests -c Release` directly. `dotnet test TimeTracker.slnx` includes Windows-only UI tests and therefore requires Windows. Test Explorer builds both the app and tests; match the chosen Debug/Release configuration.
+
+FlaUI tests use unique temporary data folders via `--data-directory`; they never touch your normal files. They use automation IDs and observable-state waits rather than screen coordinates or fixed sleeps. Tests run sequentially because they share the desktop. Set `TIME_TRACKER_EXECUTABLE` to test an explicit packaged executable; otherwise the suite discovers the matching build output. A missing executable is a test failure, not a skip.
+
+The core suite covers start/pause/resume, overlapping timers, repeated sampling, end/delete, editing, midnight truncation, local dates, new daily entries, backwards clock adjustments, recovery to paused state, formatting, invalid input, atomic persistence, backup fallback, damaged data, failed writes, and preferences.
+
+The UI suite covers create/edit, delete cancellation/confirmation, start/stop/end, reopened totals, simultaneous timers, close-to-pause, theme persistence, window width restoration, forced termination/checkpoint recovery, and visible midnight warnings/history. It must be executed on Windows before those workflows are considered verified. UI tests require access to an unlocked desktop and UI Automation; do not lock the machine during the run.
+
+## Automation in GitHub
+
+`.github/workflows/build-and-test.yml` runs core tests on Linux and builds/tests the app on a Windows runner for pull requests, pushes to main, and manual runs. Result files are uploaded even when tests fail. If the hosted runner cannot provide a usable interactive desktop, investigate that failure and run the Windows suite locally; do not convert it into a silently passing check. Local test execution has no usage fee. Hosted CI is optional and subject to provider terms.
+
+## Required manual Windows release checks
+
+These exercise real OS behavior that should not be simulated by a passing unit test:
+
+- Start a timer, lock Windows, wait, then unlock. The timer must be paused; locked time must not accrue. Start again, sleep Windows, wake, and verify the same behavior.
+- Close normally with active timers and reopen. All entries must remain with paused totals. Kill the process separately and confirm recovery to the last checkpoint.
+- Run through midnight (or use a temporary, isolated test environment clock). Confirm exact day-boundary stop, visible warning, acknowledgement, and a fresh next-day entry. Avoid changing your work machine's clock.
+- Check light/dark/system themes, Windows preference changes, high contrast, keyboard-only operation, long labels, 125–200% display scaling, row growth, scrolling, maximization, restored placement, and monitor changes.
+- Try saving into an unwritable isolated folder. Confirm visible errors and the warning before discarding unsaved time on close.
+- Verify copy formats against known totals, including seconds below a whole minute; confirm no rounding up.
+- Test the self-contained release on Windows without the .NET SDK and without internet access; verify shortcuts, update behavior, and retained data.
+
+Record Windows version, build commit, executed test counts, manual outcomes, and any failures before release. The initial Linux validation cannot satisfy this checklist.

@@ -1,0 +1,14 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="WindowSurface" Color="#F5F7FB" />
+    <SolidColorBrush x:Key="RowSurface" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="RunningSurface" Color="#EAF2FF" />
+    <SolidColorBrush x:Key="TextPrimary" Color="#172033" />
+    <SolidColorBrush x:Key="TextSecondary" Color="#536176" />
+    <SolidColorBrush x:Key="ControlBorder" Color="#CBD5E1" />
+    <SolidColorBrush x:Key="ControlHover" Color="#E2E8F0" />
+    <SolidColorBrush x:Key="ActionSurface" Color="#1D4ED8" />
+    <SolidColorBrush x:Key="ActionText" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="WarningText" Color="#92400E" />
+    <SolidColorBrush x:Key="DangerText" Color="#B91C1C" />
+</ResourceDictionary>
