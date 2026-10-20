@@ -63,7 +63,9 @@
     </Style>
     <Style x:Key="RaisedButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
         <Style.Resources>
-            <StaticResource x:Key="ButtonSurfaceShadow" ResourceKey="RaisedSurfaceShadow" />
+            <ResourceDictionary>
+                <StaticResource x:Key="ButtonSurfaceShadow" ResourceKey="RaisedSurfaceShadow" />
+            </ResourceDictionary>
         </Style.Resources>
     </Style>
     <Style x:Key="TimerButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
