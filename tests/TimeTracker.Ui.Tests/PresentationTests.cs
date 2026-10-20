@@ -93,6 +93,14 @@ public sealed class PresentationTests
                         Assert.InRange(shadow.Opacity, 0.1, 0.2);
                     }
 
+                    var newTracker = (Button)main.FindName("NewTrackerButton");
+                    var settingsAction = (Button)main.FindName("SettingsButton");
+                    main.UpdateLayout();
+                    Assert.Same(newTracker.Style, settingsAction.Style);
+                    Assert.Equal(newTracker.ActualWidth, settingsAction.ActualWidth, 3);
+                    Assert.Equal(newTracker.ActualHeight, settingsAction.ActualHeight, 3);
+                    Assert.Equal(newTracker.Padding, settingsAction.Padding);
+
                     Volatile.Write(ref phase, $"checking the {theme} menu");
                     var settings = main.FindName("SettingsButton") as Button;
                     Assert.NotNull(settings);
@@ -168,6 +176,27 @@ public sealed class PresentationTests
         Assert.True(row.CanToggle);
         Assert.Equal("Start today", row.ToggleText);
         Assert.Equal("Start today timer for ARCHIVE-1", row.AccessibleToggleName);
+    }
+
+    /// <summary>Refreshes description focus eligibility and spoken labels when notes are added or removed.</summary>
+    [Fact]
+    public void DescriptionRefreshNotifiesKeyboardNavigationAndAccessibleName()
+    {
+        var entry = new TrackerEntry(Guid.NewGuid(), "NOTE-1", TrackerColors.All[0],
+            new DateOnly(2026, 10, 20), TimeSpan.Zero);
+        var row = new TrackerRowViewModel(entry, false, false);
+        Assert.False(row.HasDescription);
+        Assert.Equal("", row.AccessibleDescription);
+        var notifications = new List<string?>();
+        row.PropertyChanged += (_, change) => notifications.Add(change.PropertyName);
+        row.Refresh(entry with { Label = "NOTE-RENAMED", Description = "Verify the fix" }, false);
+        Assert.True(row.HasDescription);
+        Assert.Equal("Description for NOTE-RENAMED: Verify the fix", row.AccessibleDescription);
+        Assert.Contains(nameof(row.HasDescription), notifications);
+        Assert.Contains(nameof(row.AccessibleDescription), notifications);
+        row.Refresh(entry, false);
+        Assert.False(row.HasDescription);
+        Assert.Equal("", row.AccessibleDescription);
     }
 
     /// <summary>Checks that finalizing an entry notifies bindings and supplies both timecard formats.</summary>
@@ -298,6 +327,9 @@ public sealed class PresentationTests
         window.UpdateLayout();
         var note = Descendants(card).OfType<TextBlock>().Single(text => AutomationProperties.GetAutomationId(text) == "TrackerDescriptionText");
         Assert.Equal(description, note.Text);
+        Assert.True(note.Focusable);
+        Assert.True(System.Windows.Input.KeyboardNavigation.GetIsTabStop(note));
+        Assert.NotNull(note.FocusVisualStyle);
         Assert.Equal(rowHeight, card.ActualHeight, 3);
         Assert.True(note.ActualHeight >= 30, "Reserve two lines for optional descriptions.");
         Assert.True(note.TranslatePoint(new Point(0, 0), card).Y > total.TranslatePoint(new Point(0, 0), card).Y);

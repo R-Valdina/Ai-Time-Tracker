@@ -66,7 +66,7 @@ public sealed class TrackerWorkflowTests : IDisposable
         WaitUntil(() => File.Exists(preferencesPath) &&
             JsonSerializer.Deserialize<UserPreferences>(File.ReadAllText(preferencesPath))?.Theme == "Dark", "Theme was not saved.");
         Restart();
-        Assert.Equal("Verify the corrected workflow", Find("TrackerDescriptionText").Name);
+        Assert.Equal("Description for FEAT-1429: Verify the corrected workflow", Find("TrackerDescriptionText").Name);
         Assert.Equal("Verify the corrected workflow", ReadDocument().Entries[0].Description);
         var preferences = JsonSerializer.Deserialize<UserPreferences>(File.ReadAllText(Path.Combine(dataDirectory, "preferences.json")));
         Assert.Equal("Dark", preferences!.Theme);
@@ -155,7 +155,7 @@ public sealed class TrackerWorkflowTests : IDisposable
         Assert.Equal(original.Elapsed, archived.Elapsed);
         Assert.True(archived.IsEnded);
         Assert.Equal("Investigate intermittent login failure", archived.Description);
-        Assert.Equal(archived.Description, Find("TrackerDescriptionText").Name);
+        Assert.Equal($"Description for {archived.Label}: {archived.Description}", Find("TrackerDescriptionText").Name);
         Restart();
         Assert.True(ReadDocument().Entries[0].IsArchived);
         Assert.Empty(Find("TodayTrackers").FindAllDescendants(condition => condition.ByAutomationId("TrackerReference")));
@@ -189,6 +189,46 @@ public sealed class TrackerWorkflowTests : IDisposable
             "The archived accessibility item was not exposed.");
         Assert.Equal("Tracker NARRATOR-RENAMED", Assert.Single(history.FindAllDescendants(condition => condition.ByControlType(ControlType.DataItem))).Name);
         Assert.Equal("Tracker NARRATOR-2", Assert.Single(today.FindAllDescendants(condition => condition.ByControlType(ControlType.DataItem))).Name);
+    }
+
+    /// <summary>Uses real Tab and Shift+Tab navigation to reach populated notes in current and archived rows.</summary>
+    [Fact]
+    public void DescriptionsParticipateInKeyboardNavigationOnlyWhenPopulated()
+    {
+        Launch();
+        const string description = "Verify acceptance criteria and investigate the intermittent login failure.";
+        CreateTracker("NOTE-1", description);
+        CreateTracker("EMPTY-2");
+        var notes = Find("TodayTrackers").FindAllDescendants(condition => condition.ByAutomationId("TrackerDescriptionText"));
+        Assert.Equal(2, notes.Length);
+        Assert.Equal($"Description for NOTE-1: {description}", notes[0].Name);
+        Assert.True(notes[0].Properties.IsKeyboardFocusable.Value);
+        Assert.False(notes[1].Properties.IsKeyboardFocusable.Value);
+
+        ToggleButtons()[0].Focus();
+        Keyboard.Type(VirtualKeyShort.TAB);
+        WaitUntil(() => notes[0].Properties.HasKeyboardFocus.Value, "Tab skipped the populated tracker description.");
+        Keyboard.Type(VirtualKeyShort.TAB);
+        var actions = window!.FindAllDescendants(condition => condition.ByAutomationId("TrackerActions"));
+        WaitUntil(() => actions[1].Properties.HasKeyboardFocus.Value, "Tab did not leave the description for the next tracker.");
+        Keyboard.TypeSimultaneously(VirtualKeyShort.SHIFT, VirtualKeyShort.TAB);
+        WaitUntil(() => notes[0].Properties.HasKeyboardFocus.Value, "Shift+Tab skipped the populated description.");
+        ToggleButtons()[1].Focus();
+        Keyboard.Type(VirtualKeyShort.TAB);
+        Assert.False(notes[1].Properties.HasKeyboardFocus.Value);
+
+        OpenRowMenu("EndTracker");
+        WaitUntil(() => !ToggleButtons()[0].IsEnabled, "Ending did not finish the entry.");
+        OpenRowMenu("ArchiveTracker");
+        var history = Find("EarlierTrackers");
+        var archivedNote = history.FindFirstDescendant(condition => condition.ByAutomationId("TrackerDescriptionText"));
+        Assert.NotNull(archivedNote);
+        var archivedActions = history.FindFirstDescendant(condition => condition.ByAutomationId("TrackerActions"));
+        Assert.NotNull(archivedActions);
+        archivedActions.Focus();
+        Keyboard.Type(VirtualKeyShort.TAB);
+        WaitUntil(() => archivedNote!.Properties.HasKeyboardFocus.Value, "Tab skipped the archived description.");
+        Assert.Equal($"Description for NOTE-1: {description}", archivedNote!.Name);
     }
 
     /// <summary>Checks real mouse focus cleanup, retained keyboard focus, and names exposed to screen readers.</summary>

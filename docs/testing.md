@@ -68,3 +68,7 @@ Raised button and menu-item shadows must affect only empty background surfaces. 
 The presentation pass checks every visible main-window, editor, and confirmation button plus Settings and row-action menus in both themes. Timer labels are also checked in Start, Stop, and Ended states.
 
 Tracker rows share the subtle raised-surface shadow used by action buttons. Their background layer must be empty, with no effects on references, timers, totals, or descriptions. History uses the same row template and styling.
+
+Descriptions with text are keyboard Tab stops with the existing neutral focus indicator. Empty descriptions reserve row space but are skipped. A real-keyboard regression checks Tab, Shift+Tab, and archived descriptions; the automation name includes the card reference and complete note for Narrator.
+
+New tracker and Settings use the same main-action style and share a measured column width across header/footer grids. Presentation tests require matching actual width, height, and padding in both themes.

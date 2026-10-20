@@ -69,6 +69,12 @@
             <Style x:Key="ButtonSurfaceStyle" TargetType="Border" BasedOn="{StaticResource RaisedSurface}" />
         </Style.Resources>
     </Style>
+    <!-- Header and footer actions share dimensions as well as the raised-button appearance. -->
+    <Style x:Key="MainActionButton" TargetType="Button" BasedOn="{StaticResource RaisedButton}">
+        <Setter Property="Height" Value="36" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+    </Style>
     <Style x:Key="TimerButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
         <Setter Property="Background" Value="{DynamicResource StartSurface}" />
         <Setter Property="BorderBrush" Value="{DynamicResource StartSurface}" />

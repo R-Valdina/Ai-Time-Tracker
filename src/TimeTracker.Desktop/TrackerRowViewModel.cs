@@ -15,6 +15,10 @@ public sealed class TrackerRowViewModel(TrackerEntry entry, bool running, bool h
     public string Label => entry.Label;
     /// <summary>Gets the optional short note displayed along the bottom of the tracker.</summary>
     public string Description => entry.Description;
+    /// <summary>Includes only populated descriptions in keyboard navigation.</summary>
+    public bool HasDescription => !string.IsNullOrWhiteSpace(Description);
+    /// <summary>Identifies the card and exposes the complete note when its description receives keyboard focus.</summary>
+    public string AccessibleDescription => HasDescription ? $"Description for {Label}: {Description}" : "";
     /// <summary>Gets the selected left-border accent.</summary>
     public string Color => entry.Color;
     /// <summary>Gets the live duration in hours, minutes, and seconds.</summary>
@@ -61,7 +65,7 @@ public sealed class TrackerRowViewModel(TrackerEntry entry, bool running, bool h
         entry = updated;
         running = isRunning;
         historical = isHistorical ?? historical;
-        foreach (var name in new[] { nameof(Label), nameof(Description), nameof(Color), nameof(Total), nameof(TotalMinutes), nameof(AccessibleTotal), nameof(AccessibleToggleName), nameof(AccessibleActionsName), nameof(IsRunning), nameof(IsHistorical), nameof(ToggleText), nameof(CanToggle), nameof(CanEnd), nameof(CanArchive), nameof(IsEnded), nameof(FinalTotal), nameof(NeedsReview), nameof(Status) })
+        foreach (var name in new[] { nameof(Label), nameof(Description), nameof(HasDescription), nameof(AccessibleDescription), nameof(Color), nameof(Total), nameof(TotalMinutes), nameof(AccessibleTotal), nameof(AccessibleToggleName), nameof(AccessibleActionsName), nameof(IsRunning), nameof(IsHistorical), nameof(ToggleText), nameof(CanToggle), nameof(CanEnd), nameof(CanArchive), nameof(IsEnded), nameof(FinalTotal), nameof(NeedsReview), nameof(Status) })
             Notify(name);
     }
 }
