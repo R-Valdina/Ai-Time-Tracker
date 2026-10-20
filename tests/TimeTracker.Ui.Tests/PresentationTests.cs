@@ -3,6 +3,7 @@ using System.Runtime.ExceptionServices;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
@@ -186,7 +187,7 @@ public sealed class PresentationTests
     }
 
     /// <summary>Verifies the rounded, themed menu surface and its gutter-free full-width scroll container.</summary>
-    private static void VerifyMenu(ContextMenu menu, Button owner)
+    private static void VerifyMenu(ContextMenu menu, Control owner)
     {
         menu.PlacementTarget = owner;
         menu.IsOpen = true;
@@ -221,7 +222,7 @@ public sealed class PresentationTests
     private static void VerifySharpButtonsAndMenus(Window window)
     {
         window.UpdateLayout();
-        var buttons = Descendants(window).OfType<Button>().Where(button => button.IsVisible).ToArray();
+        var buttons = Descendants(window).OfType<ButtonBase>().Where(button => button.IsVisible && button is not RepeatButton).ToArray();
         Assert.NotEmpty(buttons);
         foreach (var button in buttons)
         {
