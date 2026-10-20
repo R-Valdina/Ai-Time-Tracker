@@ -1,0 +1,118 @@
+name: Package and release
+
+on:
+  push:
+    branches: [feature/time-tracker, main]
+    tags: ['v*']
+    paths:
+      - 'README.md'
+      - 'Directory.Build.props'
+      - 'packaging/**'
+      - 'scripts/Publish.ps1'
+      - 'scripts/Test-Installer.ps1'
+      - 'tests/TimeTracker.Ui.Tests/PresentationTests.cs'
+      - 'docs/installation.md'
+      - '.github/workflows/package-and-release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: package-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  windows-package:
+    name: Build, install, and test Windows download
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Test source and capture actual app screenshots
+        shell: pwsh
+        run: |
+          $env:TIME_TRACKER_SCREENSHOT_DIRECTORY = Join-Path $PWD 'docs/images'
+          ./scripts/Test.ps1 -IncludeUi
+      - name: Install the free NSIS packaging tool
+        shell: pwsh
+        run: |
+          choco install nsis --version=3.11 --yes --no-progress
+          if ($LASTEXITCODE -ne 0) { throw 'NSIS installation failed.' }
+      - name: Build self-contained ZIP and setup executable
+        shell: pwsh
+        run: ./scripts/Publish.ps1 -CreateInstaller
+      - name: Verify installation and user-data preservation
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem artifacts/TimeTracker-Setup-*-win-x64.exe
+          if (@($installer).Count -ne 1) { throw 'Expected exactly one setup executable.' }
+          ./scripts/Test-Installer.ps1 -Action Install -InstallerPath $installer.FullName
+      - name: Run UI automation against the installed executable
+        shell: pwsh
+        run: |
+          $env:TIME_TRACKER_EXECUTABLE = Join-Path $env:LOCALAPPDATA 'Programs/TimeTracker/TimeTracker.exe'
+          ./scripts/Test.ps1 -IncludeUi
+      - name: Verify uninstall retains user data
+        shell: pwsh
+        run: ./scripts/Test-Installer.ps1 -Action Uninstall
+      - name: Save screenshots to the repository
+        if: startsWith(github.ref, 'refs/heads/')
+        shell: pwsh
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/images/*.png
+          git diff --cached --quiet
+          if ($LASTEXITCODE -eq 1) {
+            git commit -m 'Update screenshots from the tested Windows application'
+            if ($LASTEXITCODE -ne 0) { throw 'Screenshot commit failed.' }
+            git push origin "HEAD:${{ github.ref_name }}"
+            if ($LASTEXITCODE -ne 0) { throw 'Screenshot push failed.' }
+          }
+          elseif ($LASTEXITCODE -ne 0) { throw 'Cannot inspect screenshot changes.' }
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: windows-download-and-verification
+          path: |
+            artifacts/TimeTracker-Setup-*.exe
+            artifacts/TimeTracker-*.zip
+            artifacts/README.txt
+            artifacts/INSTALL.txt
+            artifacts/SHA256SUMS.txt
+            docs/images/*.png
+            **/TestResults/*.trx
+          if-no-files-found: error
+      - name: Publish tested downloads
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [xml]$properties = Get-Content Directory.Build.props -Raw
+          $version = [string]$properties.Project.PropertyGroup.Version
+          if ($env:GITHUB_REF_NAME -ne "v$version") { throw 'The release tag must match Directory.Build.props Version.' }
+          $notes = @"
+          Download **TimeTracker-Setup-$version-win-x64.exe** and follow the setup wizard.
+          No cloning, Visual Studio, Git, separate .NET installation, account, or internet connection is needed to use the installed app.
+
+          Windows 11, 64-bit Intel/AMD. A portable ZIP, README, installation guide, and SHA-256 checksums are included below.
+          This first release is unsigned; Windows may show a publisher or reputation prompt.
+
+          Verified on a Windows runner: source tests, installer and shortcuts, UI automation against the installed app, and uninstall preserving user data. Real lock/sleep, Narrator speech, and a clean physical PC remain manual release checks.
+          "@
+          $notes | Set-Content artifacts/release-notes.md -Encoding utf8
+          $assets = @(
+            (Get-ChildItem artifacts/TimeTracker-Setup-*-win-x64.exe).FullName
+            (Get-ChildItem artifacts/TimeTracker-*-win-x64.zip).FullName
+            'artifacts/README.txt'
+            'artifacts/INSTALL.txt'
+            'artifacts/SHA256SUMS.txt'
+          )
+          gh release create $env:GITHUB_REF_NAME --verify-tag --title "Time Tracker $version" --notes-file artifacts/release-notes.md @assets
+          if ($LASTEXITCODE -ne 0) { throw 'Release publication failed.' }

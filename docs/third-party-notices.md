@@ -14,3 +14,5 @@ Development/test dependencies are downloaded through NuGet:
 Their transitive dependencies retain their respective upstream licenses. Inspect `dotnet list TimeTracker.slnx package --include-transitive` and the package metadata when changing dependencies. Test packages are not shipped as part of the application.
 
 No paid testing platform, Avalonia commercial tooling, browser automation service, cloud database, or runtime subscription is required. Visual Studio Community is an optional free personal-use IDE under Microsoft's proprietary terms, not an open-source dependency. GitHub hosting/Actions is optional and subject to GitHub's own terms and quotas; all build/test commands can run locally.
+
+The Windows setup executable is built using NSIS (Nullsoft Scriptable Install System), an open-source installer tool. NSIS installer code is licensed under the zlib/libpng license; compiler components have their own applicable notices. See https://nsis.sourceforge.io/License. NSIS is a build tool, does not require a subscription, and is not needed to run Time Tracker.

@@ -72,3 +72,11 @@ Tracker rows share the subtle raised-surface shadow used by action buttons. Thei
 Descriptions with text are keyboard Tab stops with the existing neutral focus indicator. Empty descriptions reserve row space but are skipped. A real-keyboard regression checks Tab, Shift+Tab, and archived descriptions; the automation name includes the card reference and complete note for Narrator.
 
 New tracker and Settings use the same main-action style and share a measured column width across header/footer grids. Presentation tests require matching actual width, height, and padding in both themes.
+
+## Download and installer verification
+
+The `Package and release` workflow runs all suites before creating a self-contained x64 download. With `TIME_TRACKER_SCREENSHOT_DIRECTORY` set, the presentation test renders the actual WPF main view in light and dark mode from a disposable, seeded data folder; no personal tracker data or mockups are used. Verified branch builds commit the generated PNGs for the README.
+
+`Publish.ps1 -CreateInstaller` requires the free NSIS 3.11 compiler on Windows. `Test-Installer.ps1` is for disposable runners only: it checks silent installation and replacement, included runtime/guides/screenshots, Windows Installed apps registration, shortcuts, and uninstallation retaining a sample user-data marker. The package workflow also runs the native UI suite with `TIME_TRACKER_EXECUTABLE` pointing to the installed executable. A tag matching `Directory.Build.props` publishes assets only after those steps pass.
+
+A hosted runner has an SDK and cannot prove a clean-PC installation by itself. Retain the separate manual offline, no-SDK, SmartScreen/reputation, lock/sleep, and Narrator checks before wider distribution. The initial setup executable is unsigned.

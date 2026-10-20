@@ -7,6 +7,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using TimeTracker.Core;
 using TimeTracker.Desktop;
@@ -142,6 +143,12 @@ public sealed class PresentationTests
                     Volatile.Write(ref phase, $"checking every {theme} button and menu label");
                     foreach (var window in new Window[] { main, editor, confirmation }) VerifySharpButtonsAndMenus(window);
                 }
+                var screenshotDirectory = Environment.GetEnvironmentVariable("TIME_TRACKER_SCREENSHOT_DIRECTORY");
+                if (!string.IsNullOrWhiteSpace(screenshotDirectory))
+                {
+                    Volatile.Write(ref phase, "capturing real application screenshots");
+                    SaveDocumentationScreenshots(screenshotDirectory);
+                }
             }
             catch (Exception exception) { failure = exception; }
             finally
@@ -272,6 +279,59 @@ public sealed class PresentationTests
             {
                 if (ancestor is UIElement element) Assert.Null(element.Effect);
             }
+        }
+    }
+
+    /// <summary>Renders the real shared WPF view with disposable example data for the README and offline package.</summary>
+    private static void SaveDocumentationScreenshots(string directory)
+    {
+        Directory.CreateDirectory(directory);
+        var dataDirectory = Path.Combine(Path.GetTempPath(), "TimeTracker.Screenshots", Guid.NewGuid().ToString("N"));
+        var today = DateOnly.FromDateTime(DateTime.Now);
+        var runningId = Guid.NewGuid();
+        var samples = new TrackerDocument(1,
+        [
+            new TrackerEntry(Guid.NewGuid(), "FEATURE-1428", TrackerColors.All[0], today, TimeSpan.FromMinutes(45),
+                Description: "Review acceptance criteria and prepare the test plan."),
+            new TrackerEntry(runningId, "BUG-903", TrackerColors.All[1], today, TimeSpan.FromMinutes(22),
+                Description: "Reproduce the login issue and verify the fix."),
+            new TrackerEntry(Guid.NewGuid(), "RELEASE-27", TrackerColors.All[2], today.AddDays(-1), TimeSpan.FromMinutes(71),
+                IsEnded: true, IsArchived: true, Description: "Publishing checks completed; final total retained in history.")
+        ]);
+        new JsonFileStore<TrackerDocument>(Path.Combine(dataDirectory, "tracker-data.json"), TrackerEngine.Validate).Save(samples);
+        var window = new MainWindow(dataDirectory);
+        try
+        {
+            window.Show();
+            ((MainViewModel)window.DataContext).Toggle(runningId);
+            ((Expander)window.FindName("HistorySection")).IsExpanded = true;
+            window.Width = 600;
+            window.Height = 820;
+            foreach (var theme in new[] { "Light", "Dark" })
+            {
+                SelectTheme(window, theme);
+                DrainBindings();
+                window.UpdateLayout();
+                var content = (FrameworkElement)window.Content;
+                var bitmap = new RenderTargetBitmap((int)Math.Ceiling(content.ActualWidth + 40),
+                    (int)Math.Ceiling(content.ActualHeight + 40), 96, 96, PixelFormats.Pbgra32);
+                var frame = new DrawingVisual();
+                using (var drawing = frame.RenderOpen())
+                {
+                    drawing.DrawRectangle(window.Background, null, new Rect(0, 0, bitmap.PixelWidth, bitmap.PixelHeight));
+                    drawing.DrawRectangle(new VisualBrush(content), null, new Rect(20, 20, content.ActualWidth, content.ActualHeight));
+                }
+                bitmap.Render(frame);
+                var encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(bitmap));
+                using var output = File.Create(Path.Combine(directory, $"time-tracker-{theme.ToLowerInvariant()}.png"));
+                encoder.Save(output);
+            }
+        }
+        finally
+        {
+            window.Close();
+            Directory.Delete(dataDirectory, true);
         }
     }
 

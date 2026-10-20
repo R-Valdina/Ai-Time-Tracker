@@ -1,65 +1,98 @@
 # Time Tracker
 
-A small, offline Windows desktop app for tracking time across development cards. Built with C#/.NET 10 and WPF. No accounts, telemetry, remote services, database server, or required subscription.
+**Track the time you spend on development cards—one row per card, one button to start or stop.**
 
-## Use the app
+Time Tracker is a small Windows desktop app for people who switch between test planning, troubleshooting, testing, and finishing development cards. Keep a timer for each card reference, capture work throughout the day, and copy the totals into your usual timecard system when you are ready.
 
-- Add a card reference and choose a row border color: blue for features, red for bugs, or another accent.
-- Use a single Start/Stop button to accumulate time. Multiple cards may run simultaneously.
-- End an entry to keep its final total visible. Copy hours/minutes or total whole minutes from its menu; partial minutes are not rounded up.
-- Entries stay until manually deleted, with confirmation. Starting an older card creates or resumes today's unfinished entry, keeping the previous total.
-- Windows lock, sleep, session disconnection, and normal exit pause active timers. Unlock/wake does not restart them.
-- At midnight, timers stop at the local day boundary and are highlighted for review. Acknowledge the warning from the row menu.
-- Choose Light, Dark, or Follow Windows from Settings. The window grows with rows until it reaches the screen limit; manual resizing takes precedence. Normal bounds and maximized state are remembered on exit.
+It works offline. There are no accounts, subscriptions, cloud services, or database servers to set up. The app does not connect to your employer's systems or send your data anywhere.
 
-The design reference is [the approved mockup](docs/design/card-timer-mockup.png). The application uses the agreed name **Time Tracker** and omits the mockup's optional work-type subtitle.
+## Download and install
 
-## Develop on Windows
+**[Download Time Tracker for Windows](https://github.com/R-Valdina/Ai-Time-Tracker/releases/latest)**
 
-1. Install **Visual Studio Community 2026** with **.NET desktop development**, including the .NET 10 SDK. Individual personal use is free under Microsoft's terms; the IDE itself is not open source.
-2. Clone this public repository, then open **TimeTracker.slnx** in Visual Studio.
-3. Set **TimeTracker.Desktop** as the startup project and press **F5**.
-4. Use **Test → Test Explorer** for unit and automation tests. Desktop automation needs an unlocked interactive Windows session; don't operate the tested window while the suite runs.
+1. Open the download link above and find **Assets** on the release page.
+2. Download **`TimeTracker-Setup-0.1.0-win-x64.exe`** for a Windows 11 PC with a 64-bit Intel or AMD processor.
+3. Close an older copy of Time Tracker, if it is running, then double-click the installer.
+4. Follow the setup wizard. It installs for your Windows user and creates desktop and Start menu shortcuts.
+5. Open **Time Tracker** and select **+ New tracker** to add your first card reference.
 
-Command-line alternative with the .NET 10 SDK:
+**You do not need to clone this repository, install Git or Visual Studio, or install .NET separately.** The installer includes the runtime, README, installation guide, and app files. You only need internet access to download the release; installation and everyday use work offline.
+
+The initial installer is unsigned, so Windows may show an unknown-publisher or reputation prompt. Follow your device's security policy; signing is not included in this release.
+
+Prefer to run without installing? Download the release's **`TimeTracker-0.1.0-win-x64.zip`**, extract the entire folder, and open `TimeTracker.exe`. Keep the extracted files together.
+
+The download also includes **README.txt**, **INSTALL.txt**, and **SHA256SUMS.txt**. The same written guides are installed beside the app. See the [full installation, update, and removal guide](docs/installation.md) for details.
+
+## Screenshots
+
+These are captures of the actual WPF application using disposable example data, in light and dark mode.
+
+| Light mode | Dark mode |
+| --- | --- |
+| ![Time Tracker in light mode, showing card references, descriptions, Start and Stop controls, and a retained total in Earlier days](docs/images/time-tracker-light.png) | ![Time Tracker in dark mode with the same card rows, colored borders, descriptions, and history](docs/images/time-tracker-dark.png) |
+
+## What you can do
+
+- **Track each card separately.** Enter its reference number, choose an accent color, and optionally add a short description. Blue can represent features, red bugs, and other colors whatever fits your work.
+- **Start and stop as you work.** The same button changes between green Start and red Stop. Time accumulates across sessions; multiple timers may run at once when needed.
+- **See and copy your totals.** Rows show elapsed hours, minutes, and seconds, plus whole minutes. End an entry to finalize it and show both reporting formats directly on the row. Copy hours/minutes or total minutes from its menu. Partial minutes are not rounded up.
+- **Keep a useful history.** Archive ended trackers into **Earlier days** without losing their date, description, or total. Older rows are sorted newest first. Starting an older card creates or resumes today's unfinished entry; its previous total stays intact.
+- **Pause automatically.** Active timers pause on Windows lock, sleep, session disconnection, or normal exit. Unlocking or waking does not restart them. At local midnight they pause and show a review warning for potentially forgotten time.
+- **Make it comfortable.** Choose light, dark, or Follow Windows. Rows have colored borders and subtle shadows. The window grows with entries, supports resizing and maximizing, and remembers its size and placement.
+- **Use the keyboard or Narrator.** Buttons have card-specific accessibility names. Tab and Shift+Tab reach descriptions with text; empty descriptions are skipped. Keyboard focus has a neutral visual indicator.
+
+Trackers remain until you delete them and confirm. You can edit references, descriptions, and colors. This is a time-capture helper, not a replacement for your employer's timecard or billing system; time corrections are handled there.
+
+## Quick workflow
+
+1. Select **+ New tracker**, enter a reference and optional description, choose a color, and save.
+2. Select **Start** when you begin work on that card; select **Stop** when you switch tasks or take a break.
+3. Open the row's **…** menu to edit, copy a total, or **End entry**.
+4. Copy your totals into your timecard system. Use **Archive to Earlier days** when you want an ended card out of the main area.
+5. Use **Settings** to change themes or open the data folder.
+
+## Your saved information
+
+Choose **Settings → Open data folder**, or paste `%LOCALAPPDATA%\TimeTracker` into File Explorer.
+
+| File | Contents |
+| --- | --- |
+| `tracker-data.json` | Card references, descriptions, dates, colors, totals, and ended/archive/review flags |
+| `tracker-data.backup.json` | Previous successful tracker save |
+| `preferences.json` | Theme and window size/placement |
+| `preferences.backup.json` | Previous successful preference save |
+| `time-tracker.lock` | Prevents concurrent writers; contains no tracker records |
+
+Actions save immediately, and active work is checkpointed every five seconds. Normal exit pauses and saves timers. After an unexpected termination they reopen paused at the last successful checkpoint; recent unsaved time can be lost. A failed save is reported in the app. A corrupt primary can recover from its backup with a warning; unreadable primary and backup files are not silently reset.
+
+Back up the data folder with the app closed. Files are readable JSON and are not encrypted. Installing an update or uninstalling the app leaves this separate data folder in place.
+
+## For developers
+
+The installed app needs no developer tools. This section is only for changing the source.
+
+Time Tracker uses **C#/.NET 10 and WPF**. Timer rules and JSON persistence live in `TimeTracker.Core`; Windows integration and shared UI templates/styles live in `TimeTracker.Desktop`. Unit tests use xUnit; native Windows automation uses FlaUI. These dependencies are open source and do not require paid test services.
+
+1. Install the .NET 10 SDK. Visual Studio Community with **.NET desktop development** is an optional free personal-use IDE under Microsoft's terms; the IDE itself is not open source.
+2. Clone the repository and open `TimeTracker.slnx`.
+3. Set `TimeTracker.Desktop` as the startup project and press F5.
+4. Run the regression suites before making a release:
 
 ```powershell
-dotnet build TimeTracker.slnx --configuration Release
-dotnet run --project src/TimeTracker.Desktop
 ./scripts/Test.ps1 -IncludeUi
 ```
 
-Developers need internet access to download the SDK and NuGet packages initially. The installed application runs entirely offline. VS Code can edit/build the solution too, but Visual Studio supplies the WPF designer.
+Windows UI tests need an unlocked interactive desktop. They use isolated temporary data. Linux can run core tests and cross-build Windows projects, but cannot verify the running WPF app. Developer restore/build initially needs package downloads; the installed app does not.
 
-## Local files you can find
-
-Choose **Settings → Open data folder** or paste `%LOCALAPPDATA%\TimeTracker` into Windows File Explorer:
-
-```text
-tracker-data.json          Card references, dates, colors, totals, and ended/review flags
-tracker-data.backup.json   Previous successful tracker save
-preferences.json          Theme and window placement
-preferences.backup.json   Previous successful preferences save
-time-tracker.lock         Prevents concurrent writers; contains no tracker data
-```
-
-Data saves after actions and every five seconds while the app is open. A temporary file is flushed before atomic replacement. A corrupt primary recovers from its backup with a warning; two unreadable files stop startup rather than erase your information. Back up these files with the app closed. They contain plain text, not encrypted data, and are not intended for cloud-sync folders or concurrent users.
-
-On unexpected termination, timers reopen paused at the last successful checkpoint. Up to five seconds can be lost under normal conditions; disk failures or a forced termination before a checkpoint can lose more. A backup may be one checkpoint older. Normal exit and supported Windows lifecycle events save immediately.
-
-## Tests and releases
-
-- [Testing commands, automated coverage, and Windows validation checklist](docs/testing.md)
 - [Architecture and code walkthrough](docs/architecture.md)
-- [Packaging, offline installation, and shortcuts](docs/installation.md)
-- [Dependencies and licensing](docs/third-party-notices.md)
+- [Testing commands, coverage, and manual Windows checks](docs/testing.md)
+- [Build a self-contained package and installer](docs/installation.md#build-a-release-from-source)
+- [Dependency licenses](docs/third-party-notices.md)
+- [Contribution and code standards](AGENTS.md)
 
-GitHub Actions is configured to build and test pull requests. These workflows are optional; every check can run locally without a paid testing service. Hosted runner availability, licensing, and billing are controlled by GitHub, not by this app. Required branch checks must be enabled separately in repository settings.
-
-## Current validation status
-
-Linux can run the core tests and cross-compile WPF and FlaUI projects, but cannot run the Windows application. Successful cross-compilation does **not** verify appearance, lock/sleep integration, UI automation, installer behavior, or a clean Windows installation. Complete the Windows checklist before calling a release validated.
+GitHub Actions runs unit and Windows UI tests. The packaging workflow also captures screenshots, installs the setup executable, runs automation against the installed app, and verifies removal preserves user data. Tagging a tested version publishes the download assets. Local builds and tests do not require a paid service; hosted CI remains subject to GitHub's terms.
 
 ## License
 
-MIT; see [LICENSE](LICENSE). Contributions should follow [AGENTS.md](AGENTS.md): descriptive names, XML hover documentation, shared templates, and regression tests for behavior changes.
+[MIT](LICENSE). The self-contained distribution retains the applicable runtime and third-party notices.
