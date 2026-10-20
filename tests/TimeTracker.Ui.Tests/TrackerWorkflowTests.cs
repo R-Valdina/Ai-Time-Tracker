@@ -34,7 +34,7 @@ public sealed class TrackerWorkflowTests : IDisposable
         Restart();
         Assert.Equal(total, Find("ElapsedTime").AsLabel().Text);
         Assert.False(ToggleButtons()[0].IsEnabled);
-        Assert.Contains("BUG-903", window!.FindAllDescendants().Select(element => element.Name));
+        WaitForTrackerReference("BUG-903");
     }
 
     [Fact]
@@ -46,11 +46,14 @@ public sealed class TrackerWorkflowTests : IDisposable
         Find("TrackerLabel").AsTextBox().Text = "FEAT-1429";
         Find("TrackerColor").AsListBox().Items[1].Select();
         Find("SaveTracker").AsButton().Invoke();
-        WaitUntil(() => window!.FindAllDescendants().Any(element => element.Name == "FEAT-1429"), "Edited reference was not displayed.");
+        WaitForTrackerReference("FEAT-1429");
         Assert.Equal(TrackerColors.All[1], ReadDocument().Entries[0].Color);
         Find("Settings").AsButton().Invoke();
         Find("DarkTheme").AsMenuItem().Invoke();
-        WaitUntil(() => JsonSerializer.Deserialize<UserPreferences>(File.ReadAllText(Path.Combine(dataDirectory, "preferences.json")))?.Theme == "Dark", "Theme was not saved.");
+        var preferencesPath = Path.Combine(dataDirectory, "preferences.json");
+        // Invoke queues work in WPF. The first preferences file may not exist until that work runs.
+        WaitUntil(() => File.Exists(preferencesPath) &&
+            JsonSerializer.Deserialize<UserPreferences>(File.ReadAllText(preferencesPath))?.Theme == "Dark", "Theme was not saved.");
         Restart();
         var preferences = JsonSerializer.Deserialize<UserPreferences>(File.ReadAllText(Path.Combine(dataDirectory, "preferences.json")));
         Assert.Equal("Dark", preferences!.Theme);
@@ -110,7 +113,10 @@ public sealed class TrackerWorkflowTests : IDisposable
         Launch();
         WaitUntil(() => ToggleButtons().Length == 1, "History containing review warnings did not expand.");
         Assert.Contains("Start today", ToggleButtons()[0].Name);
-        Assert.Contains(window!.FindAllDescendants(), element => element.Name.Contains("Paused at midnight"));
+        var warning = window!.FindFirstDescendant(condition => condition.ByAutomationId("MidnightWarning")
+            .And(condition.ByName("⚠ Paused at midnight — review time")));
+        Assert.NotNull(warning);
+        Assert.False(warning!.IsOffscreen);
         ToggleButtons()[0].Invoke();
         WaitUntil(() => ToggleButtons().Length == 2, "Starting a historical card did not create today's entry.");
         Assert.Equal(2, ReadDocument().Entries.Count);
@@ -144,8 +150,13 @@ public sealed class TrackerWorkflowTests : IDisposable
         Find("NewTracker").AsButton().Invoke();
         Find("TrackerLabel").AsTextBox().Text = label;
         Find("SaveTracker").AsButton().Invoke();
-        WaitUntil(() => window!.FindAllDescendants().Any(element => element.Name == label), "New card was not displayed.");
+        WaitForTrackerReference(label);
     }
+
+    /// <summary>Matches the actual reference control without reading unsupported Name properties on unrelated elements.</summary>
+    private void WaitForTrackerReference(string label) =>
+        WaitUntil(() => window!.FindFirstDescendant(condition => condition.ByAutomationId("TrackerReference")
+            .And(condition.ByName(label))) is not null, $"Card reference '{label}' was not displayed.");
 
     /// <summary>Returns visible toggle controls from the actual main window.</summary>
     private Button[] ToggleButtons() => window!.FindAllDescendants(condition => condition.ByAutomationId("ToggleTimer")).Select(element => element.AsButton()).ToArray();
