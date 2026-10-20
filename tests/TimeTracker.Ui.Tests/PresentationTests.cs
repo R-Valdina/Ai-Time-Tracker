@@ -82,7 +82,12 @@ public sealed class PresentationTests
                         Assert.Equal("Segoe UI", button.FontFamily.Source);
                         Assert.Equal(14, button.FontSize);
                         Assert.Equal(FontWeights.SemiBold, button.FontWeight);
-                        var shadow = Assert.IsType<DropShadowEffect>(button.Effect);
+                        Assert.Null(button.Effect);
+                        button.ApplyTemplate();
+                        var surface = Assert.IsType<Border>(button.Template.FindName("Chrome", button));
+                        Assert.Null(surface.Child);
+                        var shadow = Assert.IsType<DropShadowEffect>(surface.Effect);
+                        VerifyTextOutsideEffects(button);
                         Assert.InRange(shadow.ShadowDepth, 0.5, 1.5);
                         Assert.InRange(shadow.Opacity, 0.1, 0.2);
                     }
@@ -191,7 +196,12 @@ public sealed class PresentationTests
             Assert.True(menu.ActualWidth > 100);
             foreach (var item in menu.Items.OfType<MenuItem>())
             {
-                var shadow = Assert.IsType<DropShadowEffect>(item.Effect);
+                Assert.Null(item.Effect);
+                item.ApplyTemplate();
+                var itemSurface = Assert.IsType<Border>(item.Template.FindName("MenuSurface", item));
+                Assert.Null(itemSurface.Child);
+                var shadow = Assert.IsType<DropShadowEffect>(itemSurface.Effect);
+                VerifyTextOutsideEffects(item);
                 Assert.InRange(shadow.ShadowDepth, 0.5, 1);
                 Assert.InRange(shadow.Opacity, 0.05, 0.15);
                 Assert.Equal(owner.FontFamily.Source, item.FontFamily.Source);
@@ -200,6 +210,21 @@ public sealed class PresentationTests
             }
         }
         finally { menu.IsOpen = false; }
+    }
+
+    /// <summary>Requires rendered labels to have no effect-bearing ancestor that would rasterize their glyphs.</summary>
+    private static void VerifyTextOutsideEffects(Control control)
+    {
+        var labels = Descendants(control).Where(element => element is TextBlock or AccessText).ToArray();
+        Assert.NotEmpty(labels);
+        foreach (var label in labels)
+        {
+            for (DependencyObject? ancestor = label; ancestor is not null; ancestor = VisualTreeHelper.GetParent(ancestor))
+            {
+                if (ancestor is UIElement element) Assert.Null(element.Effect);
+                if (ReferenceEquals(ancestor, control)) break;
+            }
+        }
     }
 
     /// <summary>Gets a palette color from the same application resources used by all open windows.</summary>

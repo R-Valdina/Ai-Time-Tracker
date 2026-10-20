@@ -62,3 +62,5 @@ To try archiving with your own entries, end a tracker, open its row menu, and se
 UI regressions also verify friendly collection names exposed to Narrator and the archive-to-history workflow. Core coverage checks that archiving requires an ended entry and preserves its data across recovery.
 
 Narrator regression coverage inspects the actual `DataItem` peers WPF generates for tracker objects, including renaming and moving an entry into history. Their names must be `Tracker <card reference>`, never a .NET namespace/type name. The enclosing scroll area also has an explicit `Trackers` name. Check these items with Narrator hover/navigation as well as the Tab-accessible buttons.
+
+Raised button and menu-item shadows must affect only empty background surfaces. Presentation regressions walk each rendered label's ancestors and reject effects on the text path, preventing softened Settings/New tracker/menu text.
