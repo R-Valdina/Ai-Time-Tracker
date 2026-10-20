@@ -19,6 +19,7 @@ public sealed class PresentationTests
     public void ThemesReachWindowsDialogsMenusAndButtonStates()
     {
         Exception? failure = null;
+        var phase = "starting the WPF test thread";
         var thread = new Thread(() =>
         {
             var directory = Path.Combine(Path.GetTempPath(), "TimeTracker.Presentation.Tests", Guid.NewGuid().ToString("N"));
@@ -28,20 +29,26 @@ public sealed class PresentationTests
             MessageDialog? confirmation = null;
             try
             {
+                Volatile.Write(ref phase, "initializing WPF resources");
                 application = new App();
                 application.InitializeComponent();
                 application.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+                Volatile.Write(ref phase, "opening the main window");
                 main = new MainWindow(directory);
                 main.Show();
+                Volatile.Write(ref phase, "opening the tracker editor");
                 editor = new TrackerEditor { Owner = main };
                 editor.Show();
+                Volatile.Write(ref phase, "opening the confirmation dialog");
                 confirmation = new MessageDialog("Delete this test entry?", "Test confirmation", "Delete") { Owner = editor };
                 confirmation.Show();
 
                 // Round-trip themes while windows are open: existing dialogs must update, too.
                 foreach (var theme in new[] { "Dark", "Light", "Dark" })
                 {
+                    Volatile.Write(ref phase, $"applying the {theme} theme");
                     ThemeManager.Apply(theme);
+                    Volatile.Write(ref phase, $"processing {theme} theme bindings");
                     DrainBindings();
                     var background = SystemParameters.HighContrast ? SystemColors.WindowColor :
                         (Color)ColorConverter.ConvertFromString(theme == "Dark" ? "#141A24" : "#F5F7FB");
@@ -58,9 +65,11 @@ public sealed class PresentationTests
                         Assert.IsType<DropShadowEffect>(button.Effect);
                     }
 
+                    Volatile.Write(ref phase, $"checking the {theme} menu");
                     var settings = main.FindName("SettingsButton") as Button;
                     Assert.NotNull(settings);
                     VerifyMenu(settings!.ContextMenu!, settings);
+                    Volatile.Write(ref phase, $"checking {theme} timer button states");
                     var entry = new TrackerEntry(Guid.NewGuid(), "COLOR-1", TrackerColors.All[0], new DateOnly(2026, 10, 20), TimeSpan.Zero);
                     var row = new TrackerRowViewModel(entry, false, false);
                     var toggle = new Button { Content = "Start", DataContext = row, Style = (Style)application.FindResource("TimerButton") };
@@ -84,9 +93,11 @@ public sealed class PresentationTests
             catch (Exception exception) { failure = exception; }
             finally
             {
+                Volatile.Write(ref phase, "closing the presentation windows");
                 confirmation?.Close();
                 editor?.Close();
                 main?.Close();
+                Volatile.Write(ref phase, "shutting down the WPF dispatcher");
                 application?.Shutdown();
                 if (Directory.Exists(directory)) Directory.Delete(directory, true);
             }
@@ -94,7 +105,7 @@ public sealed class PresentationTests
         thread.SetApartmentState(ApartmentState.STA);
         thread.IsBackground = true;
         thread.Start();
-        Assert.True(thread.Join(TimeSpan.FromSeconds(30)), "WPF presentation checks did not complete.");
+        Assert.True(thread.Join(TimeSpan.FromSeconds(30)), $"WPF presentation checks did not complete while {Volatile.Read(ref phase)}.");
         if (failure is not null) ExceptionDispatchInfo.Capture(failure).Throw();
     }
 
@@ -158,6 +169,6 @@ public sealed class PresentationTests
         }
     }
 
-    /// <summary>Processes queued bindings and loaded handlers on the dedicated WPF STA thread.</summary>
-    private static void DrainBindings() => Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+    /// <summary>Processes bindings, layout, and loaded handlers without waiting for the desktop to become idle.</summary>
+    private static void DrainBindings() => Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Background);
 }

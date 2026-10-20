@@ -13,12 +13,12 @@ jobs:
     name: Core unit tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
       - run: dotnet test tests/TimeTracker.Core.Tests --configuration Release --logger 'trx;LogFileName=core-tests.trx'
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: core-test-results
@@ -28,14 +28,14 @@ jobs:
     name: Windows build and UI automation
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
       - name: Build and run both suites
         shell: pwsh
         run: ./scripts/Test.ps1 -IncludeUi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: windows-test-results
