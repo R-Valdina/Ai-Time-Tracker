@@ -30,7 +30,7 @@ public sealed class PresentationTests
             try
             {
                 Volatile.Write(ref phase, "initializing WPF resources");
-                application = new App();
+                application = new PresentationApplication();
                 application.InitializeComponent();
                 application.ShutdownMode = ShutdownMode.OnExplicitShutdown;
                 Volatile.Write(ref phase, "opening the main window");
@@ -47,7 +47,7 @@ public sealed class PresentationTests
                 foreach (var theme in new[] { "Dark", "Light", "Dark" })
                 {
                     Volatile.Write(ref phase, $"applying the {theme} theme");
-                    ThemeManager.Apply(theme);
+                    SelectTheme(main, theme);
                     Volatile.Write(ref phase, $"processing {theme} theme bindings");
                     DrainBindings();
                     var background = SystemParameters.HighContrast ? SystemColors.WindowColor :
@@ -149,6 +149,14 @@ public sealed class PresentationTests
     /// <summary>Requires a concrete brush so unresolved window/control styles fail explicitly.</summary>
     private static Color SolidColor(Brush brush) => Assert.IsType<SolidColorBrush>(brush).Color;
 
+    /// <summary>Exercises the real theme command so subsequent Windows notifications honor the selected preference.</summary>
+    private static void SelectTheme(MainWindow window, string theme)
+    {
+        var settings = (Button)window.FindName("SettingsButton");
+        var item = settings.ContextMenu!.Items.OfType<MenuItem>().Single(candidate => Equals(candidate.Tag, theme));
+        item.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+    }
+
     /// <summary>Checks rendered label elements, which can override a correct Button.Foreground through implicit text styles.</summary>
     private static void VerifyLabelForeground(DependencyObject parent)
     {
@@ -171,4 +179,14 @@ public sealed class PresentationTests
 
     /// <summary>Processes bindings, layout, and loaded handlers without waiting for the desktop to become idle.</summary>
     private static void DrainBindings() => Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Background);
+
+    /// <summary>Reuses the real application resources without launching production startup inside the test runner.</summary>
+    private sealed class PresentationApplication : App
+    {
+        /// <summary>Suppresses the queued startup callback, which would otherwise interpret test-host arguments and open unrelated windows.</summary>
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            // This fixture explicitly owns all windows and uses only its temporary data directory.
+        }
+    }
 }
