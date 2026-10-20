@@ -103,7 +103,8 @@
                     Style="{StaticResource RaisedButton}" AutomationProperties.AutomationId="NewTracker" AutomationProperties.Name="New tracker" ToolTip="Create a tracker (Ctrl+N)" />
         </Grid>
         <TextBlock Grid.Row="1" Text="{Binding Message}" TextWrapping="Wrap" Foreground="{DynamicResource WarningText}" Margin="0,0,0,8" AutomationProperties.AutomationId="StorageMessage" />
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                      AutomationProperties.AutomationId="TrackerArea" AutomationProperties.Name="Trackers">
             <StackPanel>
                 <Border Padding="16" BorderThickness="1" CornerRadius="8" BorderBrush="{DynamicResource ControlBorder}" Margin="0,0,0,12"
                         Visibility="{Binding IsEmpty, Converter={StaticResource BooleanVisibility}}">

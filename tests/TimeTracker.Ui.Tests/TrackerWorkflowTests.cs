@@ -4,6 +4,7 @@ using System.Text.Json;
 using FlaUI.Core;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Input;
+using FlaUI.Core.Definitions;
 using FlaUI.Core.Tools;
 using FlaUI.Core.WindowsAPI;
 using FlaUI.UIA3;
@@ -158,6 +159,36 @@ public sealed class TrackerWorkflowTests : IDisposable
         Restart();
         Assert.True(ReadDocument().Entries[0].IsArchived);
         Assert.Empty(Find("TodayTrackers").FindAllDescendants(condition => condition.ByAutomationId("TrackerReference")));
+    }
+
+    /// <summary>Checks the generated data-item peers Narrator reads, rather than only the enclosing list labels.</summary>
+    [Fact]
+    public void TrackerItemsExposeCardNamesInsteadOfInternalTypeNames()
+    {
+        Launch();
+        CreateTracker("NARRATOR-1");
+        CreateTracker("NARRATOR-2");
+        Assert.Equal("Trackers", Find("TrackerArea").Name);
+        var today = Find("TodayTrackers");
+        var items = today.FindAllDescendants(condition => condition.ByControlType(ControlType.DataItem));
+        Assert.Equal(2, items.Length);
+        Assert.Equal(new[] { "Tracker NARRATOR-1", "Tracker NARRATOR-2" }, items.Select(item => item.Name).ToArray());
+
+        OpenRowMenu("EditTracker");
+        Find("TrackerLabel").AsTextBox().Text = "NARRATOR-RENAMED";
+        Find("SaveTracker").AsButton().Invoke();
+        WaitForTrackerReference("NARRATOR-RENAMED");
+        WaitUntil(() => today.FindFirstDescendant(condition => condition.ByControlType(ControlType.DataItem)
+            .And(condition.ByName("Tracker NARRATOR-RENAMED"))) is not null, "The accessible row name did not follow the edited card reference.");
+
+        OpenRowMenu("EndTracker");
+        WaitUntil(() => !ToggleButtons()[0].IsEnabled, "Ending did not finish the entry.");
+        OpenRowMenu("ArchiveTracker");
+        var history = Find("EarlierTrackers");
+        WaitUntil(() => history.FindAllDescendants(condition => condition.ByControlType(ControlType.DataItem)).Length == 1,
+            "The archived accessibility item was not exposed.");
+        Assert.Equal("Tracker NARRATOR-RENAMED", Assert.Single(history.FindAllDescendants(condition => condition.ByControlType(ControlType.DataItem))).Name);
+        Assert.Equal("Tracker NARRATOR-2", Assert.Single(today.FindAllDescendants(condition => condition.ByControlType(ControlType.DataItem))).Name);
     }
 
     /// <summary>Checks real mouse focus cleanup, retained keyboard focus, and names exposed to screen readers.</summary>

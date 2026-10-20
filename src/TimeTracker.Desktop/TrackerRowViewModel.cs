@@ -50,6 +50,11 @@ public sealed class TrackerRowViewModel(TrackerEntry entry, bool running, bool h
     /// <summary>Explains the date, ended state, or active state without depending on color.</summary>
     public string Status => historical ? $"{entry.Date:ddd, MMM d, yyyy}" : entry.IsArchived ? $"Archived · {entry.Date:MMM d, yyyy}" : entry.IsEnded ? "Ended" : running ? "● Running" : "Paused";
 
+    /// <summary>Provides the friendly row name WPF uses for its generated accessibility data-item peer.</summary>
+    /// <remarks>ItemsControl's item peer falls back to ToString when a template container has no automation peer.
+    /// Keep this name stable while the timer ticks so navigation does not repeatedly announce changing time.</remarks>
+    public override string ToString() => $"Tracker {Label}";
+
     /// <summary>Refreshes live values while keeping the same row and keyboard focus.</summary>
     public void Refresh(TrackerEntry updated, bool isRunning, bool? isHistorical = null)
     {
