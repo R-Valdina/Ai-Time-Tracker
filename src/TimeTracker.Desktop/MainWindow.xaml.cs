@@ -175,8 +175,8 @@ public partial class MainWindow : Window
         automaticResize = true;
         var rows = Math.Max(1, model.TodayRows.Count) + (HistorySection.IsExpanded ? model.EarlierRows.Count : 0);
         var visibleRows = model.TodayRows.Concat(HistorySection.IsExpanded ? model.EarlierRows : []).ToArray();
-        var detailHeight = visibleRows.Sum(row => (row.IsEnded ? 28 : 0) + (row.NeedsReview ? 28 : 0));
-        Height = Math.Clamp(255 + rows * 112 + detailHeight, MinHeight, Math.Max(MinHeight, SystemParameters.WorkArea.Height - 40));
+        var detailHeight = visibleRows.Count(row => row.NeedsReview) * 28;
+        Height = Math.Clamp(255 + rows * 140 + detailHeight, MinHeight, Math.Max(MinHeight, SystemParameters.WorkArea.Height - 40));
         if (Top + Height > SystemParameters.WorkArea.Bottom) Top = Math.Max(SystemParameters.WorkArea.Top, SystemParameters.WorkArea.Bottom - Height);
         automaticResize = false;
     }

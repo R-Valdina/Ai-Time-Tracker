@@ -33,13 +33,15 @@ public static class ThemeManager
             resources["ActionText"] = SystemColors.HighlightTextBrush;
             resources["StartSurface"] = SystemColors.HighlightBrush;
             resources["StopSurface"] = SystemColors.HighlightBrush;
+            resources["EndedSurface"] = SystemColors.WindowBrush;
+            resources["EndedBorder"] = SystemColors.WindowTextBrush;
             resources["WarningText"] = SystemColors.WindowTextBrush;
             resources["DangerText"] = SystemColors.WindowTextBrush;
         }
         else
         {
             // Remove high-contrast overrides so the merged theme can supply colors again.
-            foreach (var key in new[] { "WindowSurface", "RowSurface", "RunningSurface", "TextPrimary", "TextSecondary", "ControlBorder", "ControlHover", "ActionSurface", "ActionText", "StartSurface", "StopSurface", "WarningText", "DangerText" })
+            foreach (var key in new[] { "WindowSurface", "RowSurface", "RunningSurface", "TextPrimary", "TextSecondary", "ControlBorder", "ControlHover", "ActionSurface", "ActionText", "StartSurface", "StopSurface", "EndedSurface", "EndedBorder", "WarningText", "DangerText" })
                 Application.Current.Resources.Remove(key);
         }
         foreach (Window window in Application.Current.Windows) ApplyTitleBar(window);

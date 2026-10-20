@@ -8,7 +8,7 @@
         <BooleanToVisibilityConverter x:Key="BooleanVisibility" />
         <!-- One shared row template serves both today's entries and retained history. -->
         <DataTemplate x:Key="TrackerRow">
-            <Border Margin="0,0,0,12" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource ControlBorder}">
+            <Border x:Name="TrackerCard" Margin="0,0,0,12" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource ControlBorder}">
                 <Border.Style>
                     <Style TargetType="Border">
                         <Setter Property="Background" Value="{DynamicResource RowSurface}" />
@@ -24,7 +24,12 @@
                             <ColumnDefinition Width="135" />
                             <ColumnDefinition Width="110" />
                         </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions><RowDefinition /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                        <!-- Reserve the total line even while hidden so End never changes row height. -->
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" MinHeight="72" />
+                            <RowDefinition Height="Auto" MinHeight="28" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
                         <StackPanel VerticalAlignment="Center" Margin="0,0,8,0">
                             <TextBlock Text="{Binding Label}" FontSize="17" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding Label}"
                                        AutomationProperties.AutomationId="TrackerReference" />
@@ -35,9 +40,9 @@
                                        AutomationProperties.AutomationId="ElapsedTime" AutomationProperties.Name="{Binding AccessibleTotal}" />
                             <TextBlock Text="{Binding TotalMinutes}" Margin="0,3,0,0" FontSize="12" Foreground="{DynamicResource TextSecondary}" />
                         </StackPanel>
-                        <StackPanel Grid.Column="2" HorizontalAlignment="Right">
+                        <StackPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center">
                             <Button Content="⋯" Padding="8,0" HorizontalAlignment="Right" Margin="0,0,0,6"
-                                    Click="OpenMenu" AutomationProperties.Name="Tracker actions" AutomationProperties.AutomationId="TrackerActions" ToolTip="Edit, copy, end, or delete">
+                                    Style="{StaticResource RaisedButton}" Click="OpenMenu" AutomationProperties.Name="Tracker actions" AutomationProperties.AutomationId="TrackerActions" ToolTip="Edit, copy, end, or delete">
                                 <Button.ContextMenu>
                                     <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
                                         <MenuItem Header="Edit label and color" Click="EditTracker" AutomationProperties.AutomationId="EditTracker" />
@@ -56,8 +61,16 @@
                                     AutomationProperties.AutomationId="ToggleTimer" AutomationProperties.Name="{Binding ToggleText}" />
                         </StackPanel>
                         <TextBlock Grid.Row="1" Grid.ColumnSpan="3" Margin="0,10,0,0" TextWrapping="Wrap"
-                                   Text="{Binding FinalTotal}" FontWeight="SemiBold" AutomationProperties.AutomationId="FinalTotal"
-                                   Visibility="{Binding IsEnded, Converter={StaticResource BooleanVisibility}}" />
+                                   Text="{Binding FinalTotal}" FontWeight="SemiBold" AutomationProperties.AutomationId="FinalTotal">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Hidden" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsEnded}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                         <TextBlock Grid.Row="2" Grid.ColumnSpan="3" Margin="0,10,0,0" TextWrapping="Wrap"
                                    Text="⚠ Paused at midnight — review time" Foreground="{DynamicResource WarningText}"
                                    AutomationProperties.AutomationId="MidnightWarning"
@@ -99,7 +112,7 @@
         <Grid Grid.Row="3" Margin="0,12,0,0">
             <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
             <TextBlock Text="Saved locally · Pauses on lock or sleep" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />
-            <Button x:Name="SettingsButton" Grid.Column="1" Content="Settings ▾" Padding="8,5" Click="OpenMenu" AutomationProperties.AutomationId="Settings">
+            <Button x:Name="SettingsButton" Grid.Column="1" Content="Settings ▾" Style="{StaticResource RaisedButton}" Click="OpenMenu" AutomationProperties.AutomationId="Settings">
                 <Button.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="Theme: Follow Windows" Tag="System" Click="ChangeTheme" AutomationProperties.AutomationId="SystemTheme" />

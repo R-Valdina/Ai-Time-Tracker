@@ -8,6 +8,8 @@
     <SolidColorBrush x:Key="ControlBorder" Color="#CBD5E1" />
     <SolidColorBrush x:Key="ControlHover" Color="#E2E8F0" />
     <SolidColorBrush x:Key="ActionSurface" Color="#1D4ED8" />
+    <SolidColorBrush x:Key="EndedSurface" Color="#F1F5F9" />
+    <SolidColorBrush x:Key="EndedBorder" Color="#64748B" />
     <SolidColorBrush x:Key="ActionText" Color="#FFFFFF" />
     <SolidColorBrush x:Key="StartSurface" Color="#45B76A" />
     <SolidColorBrush x:Key="StopSurface" Color="#F51620" />

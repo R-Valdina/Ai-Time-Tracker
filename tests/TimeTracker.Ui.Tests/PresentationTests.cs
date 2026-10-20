@@ -1,6 +1,7 @@
 using System.IO;
 using System.Runtime.ExceptionServices;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
@@ -57,18 +58,31 @@ public sealed class PresentationTests
                     DrainBindings();
                     Assert.Equal(3, application.Windows.Count);
                     var background = SystemParameters.HighContrast ? SystemColors.WindowColor :
-                        (Color)ColorConverter.ConvertFromString(theme == "Dark" ? "#141A24" : "#F5F7FB");
+                        (Color)ColorConverter.ConvertFromString(theme == "Dark" ? "#181818" : "#F5F7FB");
                     foreach (var window in new Window[] { main, editor, confirmation })
                     {
                         Assert.Equal(background, SolidColor(window.Background));
                         Assert.Equal(Palette("TextPrimary"), SolidColor(window.Foreground));
                     }
 
-                    foreach (var button in new[] { (Button)main.FindName("NewTrackerButton"), (Button)editor.FindName("SaveTrackerButton") })
+                    if (theme == "Dark" && !SystemParameters.HighContrast)
+                    {
+                        foreach (var key in new[] { "WindowSurface", "RowSurface", "RunningSurface", "ControlBorder", "ControlHover" })
+                        {
+                            var color = Palette(key);
+                            Assert.Equal(color.R, color.G);
+                            Assert.Equal(color.G, color.B);
+                        }
+                    }
+
+                    foreach (var button in new[] { (Button)main.FindName("NewTrackerButton"), (Button)main.FindName("SettingsButton"), (Button)editor.FindName("SaveTrackerButton") })
                     {
                         Assert.Equal(Palette("RowSurface"), SolidColor(button.Background));
                         Assert.Equal(Palette("TextPrimary"), SolidColor(button.Foreground));
-                        Assert.IsType<DropShadowEffect>(button.Effect);
+                        Assert.Equal("Segoe UI", button.FontFamily.Source);
+                        Assert.Equal(14, button.FontSize);
+                        Assert.Equal(FontWeights.SemiBold, button.FontWeight);
+                        Assert.True(Assert.IsType<DropShadowEffect>(button.Effect).ShadowDepth >= 3);
                     }
 
                     Volatile.Write(ref phase, $"checking the {theme} menu");
@@ -93,7 +107,17 @@ public sealed class PresentationTests
                     Assert.Equal(Palette("ActionText"), SolidColor(toggle.Foreground));
                     VerifyLabelForeground(toggle);
                     toggle.IsEnabled = false;
-                    Assert.Equal(Palette("RowSurface"), SolidColor(toggle.Background));
+                    DrainBindings();
+                    Assert.Equal(Palette("EndedSurface"), SolidColor(toggle.Background));
+                    Assert.Equal(Palette("EndedBorder"), SolidColor(toggle.BorderBrush));
+                    Assert.Equal(Palette("TextPrimary"), SolidColor(toggle.Foreground));
+                    Assert.Equal(new Thickness(2), toggle.BorderThickness);
+                    var chrome = Assert.IsType<Border>(toggle.Template.FindName("Chrome", toggle));
+                    Assert.Equal(1, chrome.Opacity);
+                    VerifyLabelForeground(toggle, "TextPrimary");
+
+                    Volatile.Write(ref phase, $"checking stable {theme} row heights");
+                    VerifyStableRowHeight(main);
                 }
             }
             catch (Exception exception) { failure = exception; }
@@ -145,6 +169,13 @@ public sealed class PresentationTests
             Assert.Equal(Palette("RowSurface"), SolidColor(surface.Background));
             Assert.IsType<ScrollViewer>(surface.Child);
             Assert.True(menu.ActualWidth > 100);
+            foreach (var item in menu.Items.OfType<MenuItem>())
+            {
+                Assert.IsType<DropShadowEffect>(item.Effect);
+                Assert.Equal(owner.FontFamily.Source, item.FontFamily.Source);
+                Assert.Equal(owner.FontSize, item.FontSize);
+                Assert.Equal(owner.FontWeight, item.FontWeight);
+            }
         }
         finally { menu.IsOpen = false; }
     }
@@ -164,12 +195,35 @@ public sealed class PresentationTests
     }
 
     /// <summary>Checks rendered label elements, which can override a correct Button.Foreground through implicit text styles.</summary>
-    private static void VerifyLabelForeground(DependencyObject parent)
+    private static void VerifyLabelForeground(DependencyObject parent, string paletteKey = "ActionText")
     {
         var text = Descendants(parent).Where(element => element is TextBlock or AccessText).ToArray();
         Assert.NotEmpty(text);
         foreach (var element in text)
-            Assert.Equal(Palette("ActionText"), SolidColor((Brush)element.GetValue(TextElement.ForegroundProperty)));
+            Assert.Equal(Palette(paletteKey), SolidColor((Brush)element.GetValue(TextElement.ForegroundProperty)));
+    }
+
+    /// <summary>Measures the live shared row before and after ending, including the app's automatic window sizing.</summary>
+    private static void VerifyStableRowHeight(MainWindow window)
+    {
+        var model = (MainViewModel)window.DataContext;
+        model.Add($"HEIGHT-{model.TodayRows.Count + 1}", TrackerColors.All[0]);
+        DrainBindings();
+        window.UpdateLayout();
+        var row = model.TodayRows.Last();
+        var card = Descendants(window).OfType<Border>().Single(border => border.Name == "TrackerCard" && ReferenceEquals(border.DataContext, row));
+        var total = Descendants(card).OfType<TextBlock>().Single(text => AutomationProperties.GetAutomationId(text) == "FinalTotal");
+        Assert.Equal(Visibility.Hidden, total.Visibility);
+        var rowHeight = card.ActualHeight;
+        var windowHeight = window.ActualHeight;
+        Assert.True(rowHeight >= 124, "Rows must reserve enough room for their final total.");
+
+        model.End(row.Id);
+        DrainBindings();
+        window.UpdateLayout();
+        Assert.Equal(Visibility.Visible, total.Visibility);
+        Assert.Equal(rowHeight, card.ActualHeight, 3);
+        Assert.Equal(windowHeight, window.ActualHeight, 3);
     }
 
     /// <summary>Enumerates a small control's visual tree to inspect its actual rendered label.</summary>
