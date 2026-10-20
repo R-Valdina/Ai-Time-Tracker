@@ -106,6 +106,28 @@ public sealed class TrackerEngineTests
     }
 
     [Fact]
+    public void ArchiveRequiresEndedEntryAndPreservesItAcrossRecovery()
+    {
+        var engine = CreateEngine();
+        var id = engine.Add("ARCHIVE-1", TrackerColors.All[0]);
+        engine.Start(id);
+        clock.Advance(TimeSpan.FromMinutes(8));
+        Assert.Throws<InvalidOperationException>(() => engine.Archive(id));
+        engine.End(id);
+        var finished = Assert.Single(engine.Entries);
+        engine.Archive(id);
+        engine.Archive(id);
+        var recovered = new TrackerEngine(engine.Snapshot(), clock, TimeZoneInfo.Utc);
+        Assert.Equal(finished with { IsArchived = true }, Assert.Single(recovered.Entries));
+        Assert.False(recovered.IsRunning(id));
+        Assert.Throws<InvalidOperationException>(() => recovered.Start(id));
+        clock.Advance(TimeSpan.FromDays(1));
+        var today = recovered.Start(id);
+        Assert.NotEqual(id, today);
+        Assert.False(recovered.Entries.Single(entry => entry.Id == today).IsArchived);
+    }
+
+    [Fact]
     public void EditingRunningEntryPreservesTimeAndRunningState()
     {
         var engine = CreateEngine();
@@ -181,6 +203,26 @@ public sealed class TrackerEngineTests
         engine.Stop(today);
         Assert.Equal(today, engine.Start(previous));
         Assert.Equal(2, engine.Entries.Count);
+    }
+
+    [Fact]
+    public void DescriptionIsOptionalValidatedAndCarriedIntoTheNextDay()
+    {
+        var engine = CreateEngine();
+        var id = engine.Add("NOTES-1", TrackerColors.All[0], "  Review acceptance criteria  ");
+        Assert.Equal("Review acceptance criteria", Assert.Single(engine.Entries).Description);
+        engine.Edit(id, "NOTES-1", TrackerColors.All[1], "Verify the fix");
+        engine.End(id);
+        engine.Archive(id);
+        clock.Advance(TimeSpan.FromDays(1));
+        var today = engine.Start(id);
+        Assert.Equal("Verify the fix", engine.Entries.Single(entry => entry.Id == today).Description);
+        Assert.Throws<ArgumentException>(() => engine.Add("A", TrackerColors.All[0], new string('x', 161)));
+        Assert.Throws<ArgumentException>(() => engine.Edit(today, "A", TrackerColors.All[0], "two\nlines"));
+        Assert.Throws<InvalidDataException>(() => TrackerEngine.Validate(new TrackerDocument(1,
+            [engine.Entries[0] with { Description = null! }])));
+        var noDescription = engine.Add("OPTIONAL", TrackerColors.All[0]);
+        Assert.Equal("", engine.Entries.Single(entry => entry.Id == noDescription).Description);
     }
 
     [Fact]

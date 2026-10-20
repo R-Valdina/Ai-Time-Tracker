@@ -143,6 +143,22 @@ public sealed class PresentationTests
         if (failure is not null) ExceptionDispatchInfo.Capture(failure).Throw();
     }
 
+    /// <summary>Checks that retained archived rows gain the new-day action when the calendar date changes.</summary>
+    [Fact]
+    public void ArchivedRowBecomesStartableOnTheFollowingDay()
+    {
+        var entry = new TrackerEntry(Guid.NewGuid(), "ARCHIVE-1", TrackerColors.All[0],
+            new DateOnly(2026, 10, 20), TimeSpan.FromMinutes(8), IsEnded: true, IsArchived: true);
+        var row = new TrackerRowViewModel(entry, false, false);
+        Assert.False(row.CanToggle);
+        Assert.False(row.CanArchive);
+        row.Refresh(entry, false, isHistorical: true);
+        Assert.True(row.IsHistorical);
+        Assert.True(row.CanToggle);
+        Assert.Equal("Start today", row.ToggleText);
+        Assert.Equal("Start today timer for ARCHIVE-1", row.AccessibleToggleName);
+    }
+
     /// <summary>Checks that finalizing an entry notifies bindings and supplies both timecard formats.</summary>
     [Fact]
     public void EndingEntryRefreshesVisibleFinalTotal()
@@ -224,6 +240,15 @@ public sealed class PresentationTests
         var windowHeight = window.ActualHeight;
         Assert.True(rowHeight >= 124, "Rows must reserve enough room for their final total.");
 
+        const string description = "A short note explaining the investigation and the remaining acceptance checks for this card.";
+        model.Edit(row.Id, row.Label, row.Color, description);
+        DrainBindings();
+        window.UpdateLayout();
+        var note = Descendants(card).OfType<TextBlock>().Single(text => AutomationProperties.GetAutomationId(text) == "TrackerDescriptionText");
+        Assert.Equal(description, note.Text);
+        Assert.Equal(rowHeight, card.ActualHeight, 3);
+        Assert.True(note.ActualHeight >= 30, "Reserve two lines for optional descriptions.");
+        Assert.True(note.TranslatePoint(new Point(0, 0), card).Y > total.TranslatePoint(new Point(0, 0), card).Y);
         model.End(row.Id);
         DrainBindings();
         window.UpdateLayout();

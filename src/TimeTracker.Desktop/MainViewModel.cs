@@ -31,7 +31,7 @@ public sealed class MainViewModel : ObservableObject
 
     /// <summary>Gets today's rows, retained until explicitly deleted.</summary>
     public ObservableCollection<TrackerRowViewModel> TodayRows { get; } = [];
-    /// <summary>Gets all previous daily rows, newest dates first.</summary>
+    /// <summary>Gets previous daily rows and explicitly archived entries, newest dates first.</summary>
     public ObservableCollection<TrackerRowViewModel> EarlierRows { get; } = [];
     /// <summary>Gets the local folder exposed through Settings.</summary>
     public string DataDirectory { get; }
@@ -51,13 +51,15 @@ public sealed class MainViewModel : ObservableObject
     public bool HasReviewWarnings => EarlierRows.Any(row => row.NeedsReview);
 
     /// <summary>Adds a new paused card using the editor's validated inputs.</summary>
-    public void Add(string label, string color) => Change(() => engine.Add(label, color));
+    public void Add(string label, string color, string description = "") => Change(() => engine.Add(label, color, description));
     /// <summary>Updates a row's descriptive fields without changing its time.</summary>
-    public void Edit(Guid id, string label, string color) => Change(() => engine.Edit(id, label, color));
+    public void Edit(Guid id, string label, string color, string description = "") => Change(() => engine.Edit(id, label, color, description));
     /// <summary>Toggles one timer without stopping other running cards.</summary>
     public void Toggle(Guid id) => Change(() => { if (engine.IsRunning(id)) engine.Stop(id); else engine.Start(id); });
     /// <summary>Finalizes the current total while retaining the entry.</summary>
     public void End(Guid id) => Change(() => engine.End(id));
+    /// <summary>Retains a finished entry in Earlier days rather than Today's list.</summary>
+    public void Archive(Guid id) => Change(() => engine.Archive(id));
     /// <summary>Deletes only the requested row after UI confirmation.</summary>
     public void Delete(Guid id) => Change(() => engine.Delete(id));
     /// <summary>Clears the midnight review marker without altering recorded time.</summary>
@@ -83,7 +85,7 @@ public sealed class MainViewModel : ObservableObject
         {
             var rows = TodayRows.Concat(EarlierRows).ToDictionary(row => row.Id);
             foreach (var entry in engine.Entries)
-                if (rows.TryGetValue(entry.Id, out var row)) row.Refresh(entry, engine.IsRunning(entry.Id));
+                if (rows.TryGetValue(entry.Id, out var row)) row.Refresh(entry, engine.IsRunning(entry.Id), entry.Date != engine.Today);
         }
         Notify(nameof(Summary));
         Notify(nameof(DateHeading));
@@ -146,7 +148,7 @@ public sealed class MainViewModel : ObservableObject
     /// <summary>Applies one shared collection-update algorithm to today's entries and earlier days.</summary>
     private void SynchronizeRows(ObservableCollection<TrackerRowViewModel> rows, bool historical)
     {
-        var desired = engine.Entries.Where(entry => (entry.Date != engine.Today) == historical)
+        var desired = engine.Entries.Where(entry => (entry.Date != engine.Today || entry.IsArchived) == historical)
             .OrderByDescending(entry => entry.Date).ToArray();
         var identifiers = desired.Select(entry => entry.Id).ToHashSet();
         foreach (var row in rows.Where(row => !identifiers.Contains(row.Id)).ToArray()) rows.Remove(row);
@@ -154,10 +156,10 @@ public sealed class MainViewModel : ObservableObject
         {
             var entry = desired[index];
             var existing = rows.FirstOrDefault(row => row.Id == entry.Id);
-            if (existing is null) rows.Insert(index, new TrackerRowViewModel(entry, engine.IsRunning(entry.Id), historical));
+            if (existing is null) rows.Insert(index, new TrackerRowViewModel(entry, engine.IsRunning(entry.Id), entry.Date != engine.Today));
             else
             {
-                existing.Refresh(entry, engine.IsRunning(entry.Id));
+                existing.Refresh(entry, engine.IsRunning(entry.Id), entry.Date != engine.Today);
                 if (rows.IndexOf(existing) != index) rows.Move(rows.IndexOf(existing), index);
             }
         }

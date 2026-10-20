@@ -46,3 +46,17 @@ These exercise real OS behavior that should not be simulated by a passing unit t
 - Test the self-contained release on Windows without the .NET SDK and without internet access; verify shortcuts, update behavior, and retained data.
 
 Record Windows version, build commit, executed test counts, manual outcomes, and any failures before release. The initial Linux validation cannot satisfy this checklist.
+
+## Preview Earlier days without changing your data
+
+On Windows, open a PowerShell terminal in the repository root and run:
+
+```powershell
+./scripts/Preview-History.ps1
+```
+
+This builds and opens a separate sample window containing two yesterday entries: one ended total and one midnight review warning. Earlier days opens automatically because of the warning. The script prints the unique temporary sample folder; your normal `%LOCALAPPDATA%\TimeTracker` files remain untouched. Close the sample window when finished. You may delete the printed temporary folder afterward.
+
+To try archiving with your own entries, end a tracker, open its row menu, and select **Archive to Earlier days**. The section opens automatically. Archiving retains the original date and total, persists after reopening, and does not delete the tracker. Today's archived entries remain ended; on a later day, **Start today** creates a fresh daily entry. An optional description of up to 160 characters appears below the total, wraps across two reserved lines, and remains with archived entries. Add or change it through the shared tracker editor. Long notes have a tooltip with the full text.
+
+UI regressions also verify friendly collection names exposed to Narrator and the archive-to-history workflow. Core coverage checks that archiving requires an ended entry and preserves its data across recovery.

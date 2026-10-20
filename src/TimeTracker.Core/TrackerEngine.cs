@@ -27,20 +27,22 @@ public sealed class TrackerEngine
     public bool IsRunning(Guid id) => runningSince.ContainsKey(id);
 
     /// <summary>Adds a paused entry for today; the label is a card reference, not a required integration.</summary>
-    public Guid Add(string label, string color)
+    public Guid Add(string label, string color, string description = "")
     {
         ValidateLabelAndColor(label, color);
-        var entry = new TrackerEntry(Guid.NewGuid(), label.Trim(), color, Today, TimeSpan.Zero);
+        ValidateDescription(description);
+        var entry = new TrackerEntry(Guid.NewGuid(), label.Trim(), color, Today, TimeSpan.Zero, Description: description.Trim());
         entries.Add(entry);
         return entry.Id;
     }
 
-    /// <summary>Changes only the label and accent, preserving all recorded time.</summary>
-    public void Edit(Guid id, string label, string color)
+    /// <summary>Changes the reference, accent, and optional description while preserving recorded time.</summary>
+    public void Edit(Guid id, string label, string color, string description = "")
     {
         ValidateLabelAndColor(label, color);
+        ValidateDescription(description);
         var index = FindIndex(id);
-        entries[index] = entries[index] with { Label = label.Trim(), Color = color };
+        entries[index] = entries[index] with { Label = label.Trim(), Color = color, Description = description.Trim() };
     }
 
     /// <summary>Starts a paused entry. Older days create a fresh daily entry, preserving history.</summary>
@@ -54,7 +56,7 @@ public sealed class TrackerEngine
             // Reuse today's unfinished entry when returning to the same historical card.
             var todayEntry = entries.LastOrDefault(candidate => candidate.Date == Today &&
                 candidate.Label == entry.Label && !candidate.IsEnded);
-            id = todayEntry?.Id ?? Add(entry.Label, entry.Color);
+            id = todayEntry?.Id ?? Add(entry.Label, entry.Color, entry.Description);
             entry = entries[FindIndex(id)];
         }
         if (entry.IsEnded)
@@ -83,6 +85,15 @@ public sealed class TrackerEngine
         Stop(id);
         var index = FindIndex(id);
         entries[index] = entries[index] with { IsEnded = true };
+    }
+
+    /// <summary>Moves a finalized entry out of Today without changing its date or recorded total.</summary>
+    public void Archive(Guid id)
+    {
+        var index = FindIndex(id);
+        if (!entries[index].IsEnded)
+            throw new InvalidOperationException("End the entry before archiving it.");
+        entries[index] = entries[index] with { IsArchived = true };
     }
 
     /// <summary>Dismisses the midnight warning after the user reviews a potentially forgotten timer.</summary>
@@ -142,8 +153,8 @@ public sealed class TrackerEngine
         {
             if (entry is null || entry.Id == Guid.Empty || !identifiers.Add(entry.Id) || entry.Elapsed < TimeSpan.Zero || entry.Date == DateOnly.MaxValue)
                 throw new InvalidDataException("The tracker file contains an invalid entry.");
-            try { ValidateLabelAndColor(entry.Label, entry.Color); }
-            catch (ArgumentException exception) { throw new InvalidDataException("The tracker file contains an invalid label or color.", exception); }
+            try { ValidateLabelAndColor(entry.Label, entry.Color); ValidateDescription(entry.Description); }
+            catch (ArgumentException exception) { throw new InvalidDataException("The tracker file contains an invalid label, color, or description.", exception); }
         }
     }
 
@@ -152,6 +163,13 @@ public sealed class TrackerEngine
     {
         var index = entries.FindIndex(entry => entry.Id == id);
         return index >= 0 ? index : throw new KeyNotFoundException("Tracker no longer exists.");
+    }
+
+    /// <summary>Bounds optional notes for compact rows and rejects malformed saved descriptions.</summary>
+    private static void ValidateDescription(string description)
+    {
+        if (description is null || description.Length > 160 || description.Contains('\r') || description.Contains('\n'))
+            throw new ArgumentException("Use a description of up to 160 characters on one line.", nameof(description));
     }
 
     /// <summary>Enforces the same input rules for newly created and edited entries.</summary>

@@ -7,11 +7,14 @@ public sealed class TrackerRowViewModel(TrackerEntry entry, bool running, bool h
 {
     private TrackerEntry entry = entry;
     private bool running = running;
+    private bool historical = historical;
 
     /// <summary>Gets the stable identifier used by row commands.</summary>
     public Guid Id => entry.Id;
     /// <summary>Gets the card reference entered by the user.</summary>
     public string Label => entry.Label;
+    /// <summary>Gets the optional short note displayed along the bottom of the tracker.</summary>
+    public string Description => entry.Description;
     /// <summary>Gets the selected left-border accent.</summary>
     public string Color => entry.Color;
     /// <summary>Gets the live duration in hours, minutes, and seconds.</summary>
@@ -36,6 +39,8 @@ public sealed class TrackerRowViewModel(TrackerEntry entry, bool running, bool h
     public bool CanToggle => historical || !entry.IsEnded;
     /// <summary>Prevents repeatedly ending an already-finalized row.</summary>
     public bool CanEnd => !entry.IsEnded;
+    /// <summary>Allows finished entries to move into history once.</summary>
+    public bool CanArchive => entry.IsEnded && !entry.IsArchived;
     /// <summary>Indicates whether to display the finalized timecard summary on this row.</summary>
     public bool IsEnded => entry.IsEnded;
     /// <summary>Gets both final timecard formats directly on the retained entry.</summary>
@@ -43,14 +48,15 @@ public sealed class TrackerRowViewModel(TrackerEntry entry, bool running, bool h
     /// <summary>Indicates that a midnight pause still needs acknowledgement.</summary>
     public bool NeedsReview => entry.NeedsReview;
     /// <summary>Explains the date, ended state, or active state without depending on color.</summary>
-    public string Status => historical ? $"{entry.Date:ddd, MMM d, yyyy}" : entry.IsEnded ? "Ended" : running ? "● Running" : "Paused";
+    public string Status => historical ? $"{entry.Date:ddd, MMM d, yyyy}" : entry.IsArchived ? $"Archived · {entry.Date:MMM d, yyyy}" : entry.IsEnded ? "Ended" : running ? "● Running" : "Paused";
 
     /// <summary>Refreshes live values while keeping the same row and keyboard focus.</summary>
-    public void Refresh(TrackerEntry updated, bool isRunning)
+    public void Refresh(TrackerEntry updated, bool isRunning, bool? isHistorical = null)
     {
         entry = updated;
         running = isRunning;
-        foreach (var name in new[] { nameof(Label), nameof(Color), nameof(Total), nameof(TotalMinutes), nameof(AccessibleTotal), nameof(AccessibleToggleName), nameof(AccessibleActionsName), nameof(IsRunning), nameof(ToggleText), nameof(CanToggle), nameof(CanEnd), nameof(IsEnded), nameof(FinalTotal), nameof(NeedsReview), nameof(Status) })
+        historical = isHistorical ?? historical;
+        foreach (var name in new[] { nameof(Label), nameof(Description), nameof(Color), nameof(Total), nameof(TotalMinutes), nameof(AccessibleTotal), nameof(AccessibleToggleName), nameof(AccessibleActionsName), nameof(IsRunning), nameof(IsHistorical), nameof(ToggleText), nameof(CanToggle), nameof(CanEnd), nameof(CanArchive), nameof(IsEnded), nameof(FinalTotal), nameof(NeedsReview), nameof(Status) })
             Notify(name);
     }
 }

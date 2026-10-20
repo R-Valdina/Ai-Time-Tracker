@@ -3,11 +3,11 @@ using TimeTracker.Core;
 
 namespace TimeTracker.Desktop;
 
-/// <summary>Shared create/edit dialog requiring only a card reference and accent color.</summary>
+/// <summary>Shared create/edit dialog with a required card reference, accent color, and optional short description.</summary>
 public partial class TrackerEditor : Window
 {
     /// <summary>Initializes a new or existing tracker without modifying the tracker until Save.</summary>
-    public TrackerEditor(string label = "", string? color = null)
+    public TrackerEditor(string label = "", string? color = null, string description = "")
     {
         InitializeComponent();
         ThemeManager.InitializeWindow(this);
@@ -15,12 +15,15 @@ public partial class TrackerEditor : Window
         ColorInput.ItemsSource = TrackerColors.All.Select((value, index) => new ColorChoice(names[index], value)).ToArray();
         ColorInput.SelectedIndex = Math.Max(0, TrackerColors.All.ToList().IndexOf(color ?? TrackerColors.All[0]));
         LabelInput.Text = label;
+        DescriptionInput.Text = description;
         Title = label.Length == 0 ? "New tracker" : "Edit tracker";
         Loaded += (_, _) => { LabelInput.Focus(); LabelInput.SelectAll(); };
     }
 
     /// <summary>Gets the trimmed card reference after successful confirmation.</summary>
     public string TrackerLabel => LabelInput.Text.Trim();
+    /// <summary>Gets the optional trimmed note after successful confirmation.</summary>
+    public string TrackerDescription => DescriptionInput.Text.Trim();
     /// <summary>Gets the explicitly selected accent after successful confirmation.</summary>
     public string TrackerColor => ((ColorChoice)ColorInput.SelectedItem).Color;
 

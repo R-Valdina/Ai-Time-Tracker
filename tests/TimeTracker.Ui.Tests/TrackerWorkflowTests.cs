@@ -26,6 +26,7 @@ public sealed class TrackerWorkflowTests : IDisposable
     {
         Launch();
         CreateTracker("BUG-903");
+        Assert.Equal("Today’s trackers", Find("TodayTrackers").Name);
         ToggleButtons()[0].Invoke();
         WaitUntil(() => ToggleButtons()[0].Name.Contains("Stop"), "Timer did not enter its running state.");
         WaitUntil(() => !Find("ElapsedTime").AsLabel().Text.Equals("00:00:00"), "Timer never accumulated time.");
@@ -48,8 +49,10 @@ public sealed class TrackerWorkflowTests : IDisposable
     public void EditDeleteConfirmationAndThemePreferenceWork()
     {
         Launch();
-        CreateTracker("FEAT-1428");
+        CreateTracker("FEAT-1428", "Review acceptance criteria");
         OpenRowMenu("EditTracker");
+        Assert.Equal("Review acceptance criteria", Find("TrackerDescription").AsTextBox().Text);
+        Find("TrackerDescription").AsTextBox().Text = "Verify the corrected workflow";
         Find("TrackerLabel").AsTextBox().Text = "FEAT-1429";
         Find("TrackerColor").AsListBox().Items[1].Select();
         Find("SaveTracker").AsButton().Invoke();
@@ -62,6 +65,8 @@ public sealed class TrackerWorkflowTests : IDisposable
         WaitUntil(() => File.Exists(preferencesPath) &&
             JsonSerializer.Deserialize<UserPreferences>(File.ReadAllText(preferencesPath))?.Theme == "Dark", "Theme was not saved.");
         Restart();
+        Assert.Equal("Verify the corrected workflow", Find("TrackerDescriptionText").Name);
+        Assert.Equal("Verify the corrected workflow", ReadDocument().Entries[0].Description);
         var preferences = JsonSerializer.Deserialize<UserPreferences>(File.ReadAllText(Path.Combine(dataDirectory, "preferences.json")));
         Assert.Equal("Dark", preferences!.Theme);
         OpenRowMenu("DeleteTracker");
@@ -119,6 +124,7 @@ public sealed class TrackerWorkflowTests : IDisposable
         new JsonFileStore<TrackerDocument>(Path.Combine(dataDirectory, "tracker-data.json")).Save(document);
         Launch();
         WaitUntil(() => ToggleButtons().Length == 1, "History containing review warnings did not expand.");
+        Assert.Equal("Earlier days trackers", Find("EarlierTrackers").Name);
         Assert.Contains("Start today", ToggleButtons()[0].Name);
         var warning = window!.FindFirstDescendant(condition => condition.ByAutomationId("MidnightWarning")
             .And(condition.ByName("⚠ Paused at midnight — review time")));
@@ -127,6 +133,31 @@ public sealed class TrackerWorkflowTests : IDisposable
         ToggleButtons()[0].Invoke();
         WaitUntil(() => ToggleButtons().Length == 2, "Starting a historical card did not create today's entry.");
         Assert.Equal(2, ReadDocument().Entries.Count);
+    }
+
+    /// <summary>Archives an ended row through the menu and checks the real saved history after reopening.</summary>
+    [Fact]
+    public void ArchiveRetainsDateAndTotalInEarlierDays()
+    {
+        Launch();
+        CreateTracker("ARCHIVE-1", "Investigate intermittent login failure");
+        var original = ReadDocument().Entries[0];
+        OpenRowMenu("EndTracker");
+        WaitUntil(() => !ToggleButtons()[0].IsEnabled, "Ending did not finish the entry.");
+        OpenRowMenu("ArchiveTracker");
+        WaitUntil(() => ReadDocument().Entries[0].IsArchived, "Archive was not saved.");
+        Assert.Empty(Find("TodayTrackers").FindAllDescendants(condition => condition.ByAutomationId("TrackerReference")));
+        Assert.Equal("Earlier days trackers", Find("EarlierTrackers").Name);
+        Assert.Single(Find("EarlierTrackers").FindAllDescendants(condition => condition.ByAutomationId("TrackerReference")));
+        var archived = ReadDocument().Entries[0];
+        Assert.Equal(original.Date, archived.Date);
+        Assert.Equal(original.Elapsed, archived.Elapsed);
+        Assert.True(archived.IsEnded);
+        Assert.Equal("Investigate intermittent login failure", archived.Description);
+        Assert.Equal(archived.Description, Find("TrackerDescriptionText").Name);
+        Restart();
+        Assert.True(ReadDocument().Entries[0].IsArchived);
+        Assert.Empty(Find("TodayTrackers").FindAllDescendants(condition => condition.ByAutomationId("TrackerReference")));
     }
 
     /// <summary>Checks real mouse focus cleanup, retained keyboard focus, and names exposed to screen readers.</summary>
@@ -187,10 +218,11 @@ public sealed class TrackerWorkflowTests : IDisposable
     }
 
     /// <summary>Creates a tracker through the same editor a user operates.</summary>
-    private void CreateTracker(string label)
+    private void CreateTracker(string label, string description = "")
     {
         Find("NewTracker").AsButton().Invoke();
         Find("TrackerLabel").AsTextBox().Text = label;
+        Find("TrackerDescription").AsTextBox().Text = description;
         Find("SaveTracker").AsButton().Invoke();
         WaitForTrackerReference(label);
     }

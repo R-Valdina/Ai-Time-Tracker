@@ -8,7 +8,9 @@ public sealed record TrackerEntry(
     DateOnly Date,
     TimeSpan Elapsed,
     bool IsEnded = false,
-    bool NeedsReview = false);
+    bool NeedsReview = false,
+    bool IsArchived = false,
+    string Description = "");
 
 /// <summary>Versioned on-disk data. No running session can resume accidentally after a crash.</summary>
 public sealed record TrackerDocument(int Version, IReadOnlyList<TrackerEntry> Entries)

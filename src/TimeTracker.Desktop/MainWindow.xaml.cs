@@ -60,7 +60,7 @@ public partial class MainWindow : Window
     private void NewTracker(object sender, RoutedEventArgs e)
     {
         var editor = new TrackerEditor { Owner = this };
-        if (editor.ShowDialog() == true) { model.Add(editor.TrackerLabel, editor.TrackerColor); AdjustHeight(); }
+        if (editor.ShowDialog() == true) { model.Add(editor.TrackerLabel, editor.TrackerColor, editor.TrackerDescription); AdjustHeight(); }
     }
 
     /// <summary>Opens a context menu with mouse or keyboard using the same action button.</summary>
@@ -75,14 +75,20 @@ public partial class MainWindow : Window
     private void EditTracker(object sender, RoutedEventArgs e)
     {
         var row = Row(sender);
-        var editor = new TrackerEditor(row.Label, row.Color) { Owner = this };
-        if (editor.ShowDialog() == true) model.Edit(row.Id, editor.TrackerLabel, editor.TrackerColor);
+        var editor = new TrackerEditor(row.Label, row.Color, row.Description) { Owner = this };
+        if (editor.ShowDialog() == true) model.Edit(row.Id, editor.TrackerLabel, editor.TrackerColor, editor.TrackerDescription);
     }
 
     /// <summary>Starts or pauses one row while allowing deliberate overlapping timers.</summary>
     private void ToggleTracker(object sender, RoutedEventArgs e) => model.Toggle(Row(sender).Id);
     /// <summary>Finalizes the selected entry without deleting its total.</summary>
     private void EndTracker(object sender, RoutedEventArgs e) => model.End(Row(sender).Id);
+    /// <summary>Moves a finished tracker into retained history and opens that section for review.</summary>
+    private void ArchiveTracker(object sender, RoutedEventArgs e)
+    {
+        model.Archive(Row(sender).Id);
+        HistorySection.IsExpanded = true;
+    }
     /// <summary>Acknowledges a potentially forgotten midnight timer.</summary>
     private void ReviewTracker(object sender, RoutedEventArgs e) => model.MarkReviewed(Row(sender).Id);
     /// <summary>Copies the current duration as hours and minutes.</summary>
@@ -176,7 +182,7 @@ public partial class MainWindow : Window
         var rows = Math.Max(1, model.TodayRows.Count) + (HistorySection.IsExpanded ? model.EarlierRows.Count : 0);
         var visibleRows = model.TodayRows.Concat(HistorySection.IsExpanded ? model.EarlierRows : []).ToArray();
         var detailHeight = visibleRows.Count(row => row.NeedsReview) * 28;
-        Height = Math.Clamp(255 + rows * 140 + detailHeight, MinHeight, Math.Max(MinHeight, SystemParameters.WorkArea.Height - 40));
+        Height = Math.Clamp(255 + rows * 160 + detailHeight, MinHeight, Math.Max(MinHeight, SystemParameters.WorkArea.Height - 40));
         if (Top + Height > SystemParameters.WorkArea.Bottom) Top = Math.Max(SystemParameters.WorkArea.Top, SystemParameters.WorkArea.Bottom - Height);
         automaticResize = false;
     }

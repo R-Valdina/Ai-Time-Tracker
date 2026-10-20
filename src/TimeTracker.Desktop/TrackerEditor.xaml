@@ -6,6 +6,8 @@
     <StackPanel Margin="22">
         <Label Content="Card _reference" Target="LabelInput" Foreground="{DynamicResource TextPrimary}" Padding="0,0,0,6" />
         <TextBox x:Name="LabelInput" MaxLength="120" AutomationProperties.AutomationId="TrackerLabel" AutomationProperties.Name="Card reference" />
+        <Label Content="_Description (optional, 160 characters)" Target="DescriptionInput" Foreground="{DynamicResource TextPrimary}" Padding="0,0,0,6" Margin="0,16,0,0" />
+        <TextBox x:Name="DescriptionInput" MaxLength="160" AutomationProperties.AutomationId="TrackerDescription" AutomationProperties.Name="Description, optional, up to 160 characters" />
         <TextBlock Text="Row border color" Margin="0,16,0,8" />
         <ListBox x:Name="ColorInput" BorderThickness="0" Background="Transparent" SelectedIndex="0"
                  ItemContainerStyle="{StaticResource ColorChoiceItem}"
