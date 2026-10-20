@@ -23,16 +23,21 @@ public sealed class PresentationTests
         var thread = new Thread(() =>
         {
             var directory = Path.Combine(Path.GetTempPath(), "TimeTracker.Presentation.Tests", Guid.NewGuid().ToString("N"));
-            App? application = null;
+            Application? application = null;
             MainWindow? main = null;
             TrackerEditor? editor = null;
             MessageDialog? confirmation = null;
             try
             {
                 Volatile.Write(ref phase, "initializing WPF resources");
-                application = new PresentationApplication();
-                application.InitializeComponent();
-                application.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+                application = new Application
+                {
+                    ShutdownMode = ShutdownMode.OnExplicitShutdown,
+                    Resources = new ResourceDictionary
+                    {
+                        Source = new Uri("/TimeTracker;component/Themes/ApplicationResources.xaml", UriKind.Relative)
+                    }
+                };
                 Volatile.Write(ref phase, "opening the main window");
                 main = new MainWindow(directory);
                 main.Show();
@@ -50,6 +55,7 @@ public sealed class PresentationTests
                     SelectTheme(main, theme);
                     Volatile.Write(ref phase, $"processing {theme} theme bindings");
                     DrainBindings();
+                    Assert.Equal(3, application.Windows.Count);
                     var background = SystemParameters.HighContrast ? SystemColors.WindowColor :
                         (Color)ColorConverter.ConvertFromString(theme == "Dark" ? "#141A24" : "#F5F7FB");
                     foreach (var window in new Window[] { main, editor, confirmation })
@@ -180,13 +186,4 @@ public sealed class PresentationTests
     /// <summary>Processes bindings, layout, and loaded handlers without waiting for the desktop to become idle.</summary>
     private static void DrainBindings() => Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Background);
 
-    /// <summary>Reuses the real application resources without launching production startup inside the test runner.</summary>
-    private sealed class PresentationApplication : App
-    {
-        /// <summary>Suppresses the queued startup callback, which would otherwise interpret test-host arguments and open unrelated windows.</summary>
-        protected override void OnStartup(StartupEventArgs e)
-        {
-            // This fixture explicitly owns all windows and uses only its temporary data directory.
-        }
-    }
 }
