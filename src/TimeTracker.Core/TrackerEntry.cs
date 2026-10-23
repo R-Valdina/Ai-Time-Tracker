@@ -19,7 +19,7 @@ public sealed record TrackerDocument(int Version, IReadOnlyList<TrackerEntry> En
     public static TrackerDocument Empty => new(1, []);
 }
 
-/// <summary>Persistent appearance and normal (non-maximized) window geometry.</summary>
+/// <summary>Persistent appearance, card ordering, and normal (non-maximized) window geometry.</summary>
 public sealed record UserPreferences(
     string Theme = "System",
     double Width = 580,
@@ -27,7 +27,8 @@ public sealed record UserPreferences(
     double? Left = null,
     double? Top = null,
     bool Maximized = false,
-    bool ManuallySized = false);
+    bool ManuallySized = false,
+    TrackerSortOrder SortOrder = TrackerSortOrder.Added);
 
 /// <summary>Shared color choices used by both the editor and validation.</summary>
 public static class TrackerColors

@@ -209,11 +209,18 @@
                                 BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
                                 Effect="{StaticResource MenuSurfaceShadow}" />
                         <Border BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" />
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition /></Grid.ColumnDefinitions>
+                                <Path x:Name="SelectionMark" Data="M 0,5 L 3,8 L 10,0" Width="10" Height="10"
+                                      Stretch="Uniform" Stroke="{DynamicResource TextPrimary}" StrokeThickness="1.5"
+                                      VerticalAlignment="Center" Margin="0,0,8,0" Visibility="Collapsed" />
+                                <ContentPresenter Grid.Column="1" ContentSource="Header" RecognizesAccessKey="True" />
+                            </Grid>
                         </Border>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsHighlighted" Value="True"><Setter TargetName="MenuSurface" Property="Background" Value="{DynamicResource ControlHover}" /></Trigger>
+                        <Trigger Property="IsChecked" Value="True"><Setter TargetName="SelectionMark" Property="Visibility" Value="Visible" /></Trigger>
                         <Trigger Property="IsEnabled" Value="False"><Setter TargetName="MenuSurface" Property="Opacity" Value="0.5" /></Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

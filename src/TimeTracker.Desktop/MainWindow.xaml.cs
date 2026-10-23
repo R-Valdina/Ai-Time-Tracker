@@ -111,6 +111,10 @@ public partial class MainWindow : Window
         { model.Delete(row.Id); AdjustHeight(); }
     }
 
+    /// <summary>Applies the selected card-reference order from the shared Settings menu.</summary>
+    private void ChangeSortOrder(object sender, RoutedEventArgs e) =>
+        model.SetSortOrder(Enum.Parse<TrackerSortOrder>((string)((MenuItem)sender).Tag));
+
     /// <summary>Persists and immediately applies the chosen theme.</summary>
     private void ChangeTheme(object sender, RoutedEventArgs e)
     {

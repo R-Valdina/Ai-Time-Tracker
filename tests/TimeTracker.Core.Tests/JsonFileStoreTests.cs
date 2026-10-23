@@ -90,9 +90,17 @@ public sealed class JsonFileStoreTests : IDisposable
     public void PreferencesRoundTripThemeAndWindowPlacement()
     {
         var store = new JsonFileStore<UserPreferences>(Path.Combine(directory, "preferences.json"));
-        var preferences = new UserPreferences("Dark", 640, 800, 30, 50, true, true);
+        var preferences = new UserPreferences("Dark", 640, 800, 30, 50, true, true, TrackerSortOrder.Descending);
         store.Save(preferences);
         Assert.Equal(preferences, store.Load(() => new UserPreferences()).Value);
+    }
+
+    [Fact]
+    public void OlderPreferencesWithoutSortOrderRetainAddedOrder()
+    {
+        var preferences = System.Text.Json.JsonSerializer.Deserialize<UserPreferences>("{\"Theme\":\"Light\"}");
+        Assert.NotNull(preferences);
+        Assert.Equal(TrackerSortOrder.Added, preferences.SortOrder);
     }
 
     /// <summary>Removes only the directory created by this test instance.</summary>

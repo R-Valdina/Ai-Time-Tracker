@@ -231,6 +231,46 @@ public sealed class TrackerWorkflowTests : IDisposable
         Assert.Equal($"Description for NOTE-1: {description}", archivedNote!.Name);
     }
 
+    /// <summary>Sorts through the actual Settings controls while keeping the running card and saved insertion order intact.</summary>
+    [Fact]
+    public void SortOrderUsesCardNumbersPersistsAndFollowsEdits()
+    {
+        Launch();
+        CreateTracker("CARD-10");
+        CreateTracker("CARD-1");
+        CreateTracker("CARD-2");
+        ToggleButtons()[0].Invoke();
+        WaitUntil(() => ToggleButtons()[0].Name == "Stop timer for CARD-10", "The test timer did not start.");
+        SelectSort("SortAscending");
+        WaitUntil(() => RowReferences("TodayTrackers").SequenceEqual(new[] { "CARD-1", "CARD-2", "CARD-10" }), "Ascending card order was not applied.");
+        Assert.Equal("Stop timer for CARD-10", ToggleButtons()[2].Name);
+        SelectSort("SortDescending");
+        WaitUntil(() => RowReferences("TodayTrackers").SequenceEqual(new[] { "CARD-10", "CARD-2", "CARD-1" }), "Descending card order was not applied.");
+        Assert.Equal("Stop timer for CARD-10", ToggleButtons()[0].Name);
+        Assert.Equal(new[] { "CARD-10", "CARD-1", "CARD-2" }, ReadDocument().Entries.Select(entry => entry.Label));
+        Restart();
+        Assert.Equal(new[] { "CARD-10", "CARD-2", "CARD-1" }, RowReferences("TodayTrackers"));
+        SelectSort("SortAdded");
+        WaitUntil(() => RowReferences("TodayTrackers").SequenceEqual(new[] { "CARD-10", "CARD-1", "CARD-2" }), "Original added order was not restored.");
+        SelectSort("SortAscending");
+        WaitUntil(() => RowReferences("TodayTrackers")[0] == "CARD-1", "Ascending order was not restored.");
+        OpenRowMenu("EditTracker");
+        Find("TrackerLabel").AsTextBox().Text = "CARD-20";
+        Find("SaveTracker").AsButton().Invoke();
+        WaitUntil(() => RowReferences("TodayTrackers").SequenceEqual(new[] { "CARD-2", "CARD-10", "CARD-20" }), "Editing the reference did not reposition its row.");
+    }
+
+    /// <summary>Selects a real sorting menu item without relying on coordinates.</summary>
+    private void SelectSort(string automationId)
+    {
+        Find("Settings").AsButton().Invoke();
+        Find(automationId).AsMenuItem().Invoke();
+    }
+
+    /// <summary>Reads reference controls in the same order a user encounters the displayed rows.</summary>
+    private string[] RowReferences(string listId) => Find(listId)
+        .FindAllDescendants(condition => condition.ByAutomationId("TrackerReference")).Select(element => element.Name).ToArray();
+
     /// <summary>Checks real mouse focus cleanup, retained keyboard focus, and names exposed to screen readers.</summary>
     [Fact]
     public void MouseActionsReleaseFocusWhileKeyboardActionsKeepAccessibleTargeting()

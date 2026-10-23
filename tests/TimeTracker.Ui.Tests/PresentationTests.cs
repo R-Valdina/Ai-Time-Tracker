@@ -106,6 +106,7 @@ public sealed class PresentationTests
                     var settings = main.FindName("SettingsButton") as Button;
                     Assert.NotNull(settings);
                     VerifyMenu(settings!.ContextMenu!, settings);
+                    VerifySortSelection(main, settings);
                     Volatile.Write(ref phase, $"checking {theme} timer button states");
                     var entry = new TrackerEntry(Guid.NewGuid(), "COLOR-1", TrackerColors.All[0], new DateOnly(2026, 10, 20), TimeSpan.Zero);
                     var row = new TrackerRowViewModel(entry, false, false);
@@ -167,6 +168,49 @@ public sealed class PresentationTests
         thread.Start();
         Assert.True(thread.Join(TimeSpan.FromSeconds(30)), $"WPF presentation checks did not complete while {Volatile.Read(ref phase)}.");
         if (failure is not null) ExceptionDispatchInfo.Capture(failure).Throw();
+    }
+
+    /// <summary>Reorders current/history collections in place and keeps checked selection, preferences, and timer ownership consistent.</summary>
+    [Fact]
+    public void SortingRetainsRowsAndOrdersHistoryWithinDates()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "TimeTracker.Sort.Tests", Guid.NewGuid().ToString("N"));
+        var today = DateOnly.FromDateTime(DateTime.Now);
+        var entries = new[]
+        {
+            new TrackerEntry(Guid.NewGuid(), "CARD-10", TrackerColors.All[0], today, TimeSpan.FromMinutes(4)),
+            new TrackerEntry(Guid.NewGuid(), "CARD-2", TrackerColors.All[0], today, TimeSpan.FromMinutes(8)),
+            new TrackerEntry(Guid.NewGuid(), "OLD-10", TrackerColors.All[1], today.AddDays(-1), TimeSpan.FromMinutes(12)),
+            new TrackerEntry(Guid.NewGuid(), "OLD-2", TrackerColors.All[1], today.AddDays(-1), TimeSpan.FromMinutes(16)),
+            new TrackerEntry(Guid.NewGuid(), "OLD-1", TrackerColors.All[1], today.AddDays(-2), TimeSpan.FromMinutes(20))
+        };
+        try
+        {
+            new JsonFileStore<TrackerDocument>(Path.Combine(directory, "tracker-data.json")).Save(new(1, entries));
+            var model = new MainViewModel(directory);
+            var firstRow = model.TodayRows[0];
+            model.Toggle(firstRow.Id);
+            model.SetSortOrder(TrackerSortOrder.Ascending);
+            Assert.Same(firstRow, model.TodayRows[1]);
+            Assert.True(firstRow.IsRunning);
+            Assert.True(model.IsAscendingOrder);
+            Assert.False(model.IsAddedOrder);
+            Assert.False(model.IsDescendingOrder);
+            Assert.Equal(new[] { "OLD-2", "OLD-10", "OLD-1" }, model.EarlierRows.Select(row => row.Label));
+            model.SetSortOrder(TrackerSortOrder.Descending);
+            Assert.Same(firstRow, model.TodayRows[0]);
+            model.SavePreferences(model.Preferences with { Theme = "Light" });
+            var restored = new MainViewModel(directory);
+            Assert.True(restored.IsDescendingOrder);
+            Assert.Equal(new[] { "CARD-10", "CARD-2" }, restored.TodayRows.Select(row => row.Label));
+            Assert.Equal(new[] { "OLD-10", "OLD-2", "OLD-1" }, restored.EarlierRows.Select(row => row.Label));
+            model.SetSortOrder(TrackerSortOrder.Added);
+            Assert.Same(firstRow, model.TodayRows[0]);
+            Assert.True(model.IsAddedOrder);
+            Assert.All(entries, entry => Assert.Contains(model.TodayRows.Concat(model.EarlierRows), row => row.Id == entry.Id));
+            model.PauseAll();
+        }
+        finally { if (Directory.Exists(directory)) Directory.Delete(directory, true); }
     }
 
     /// <summary>Checks that retained archived rows gain the new-day action when the calendar date changes.</summary>
@@ -252,6 +296,28 @@ public sealed class PresentationTests
             }
         }
         finally { menu.IsOpen = false; }
+    }
+
+    /// <summary>Checks the real menu binding and vector selection mark for each mutually exclusive sorting choice.</summary>
+    private static void VerifySortSelection(MainWindow window, Button settings)
+    {
+        var model = (MainViewModel)window.DataContext;
+        var menu = settings.ContextMenu!;
+        menu.IsOpen = true;
+        try
+        {
+            foreach (var order in Enum.GetValues<TrackerSortOrder>())
+            {
+                model.SetSortOrder(order);
+                DrainBindings();
+                var selected = Assert.Single(menu.Items.OfType<MenuItem>().Where(item => item.IsChecked));
+                Assert.Equal(order.ToString(), selected.Tag);
+                selected.ApplyTemplate();
+                var mark = Assert.IsType<System.Windows.Shapes.Path>(selected.Template.FindName("SelectionMark", selected));
+                Assert.Equal(Visibility.Visible, mark.Visibility);
+            }
+        }
+        finally { menu.IsOpen = false; model.SetSortOrder(TrackerSortOrder.Added); }
     }
 
     /// <summary>Checks actual main-window, editor, confirmation, timer, and row-menu controls through their shared templates.</summary>

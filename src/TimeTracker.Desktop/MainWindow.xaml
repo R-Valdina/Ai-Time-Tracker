@@ -128,7 +128,14 @@
             <TextBlock Text="Pauses on lock or sleep" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />
             <Button x:Name="SettingsButton" Grid.Column="1" Content="Settings ▾" Style="{StaticResource MainActionButton}" Click="OpenMenu" AutomationProperties.AutomationId="Settings" AutomationProperties.Name="Settings">
                 <Button.ContextMenu>
-                    <ContextMenu>
+                    <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                        <MenuItem Header="Sort cards: added order" Tag="Added" Click="ChangeSortOrder" IsCheckable="True"
+                                  IsChecked="{Binding IsAddedOrder, Mode=OneWay}" AutomationProperties.AutomationId="SortAdded" />
+                        <MenuItem Header="Sort cards: ascending" Tag="Ascending" Click="ChangeSortOrder" IsCheckable="True"
+                                  IsChecked="{Binding IsAscendingOrder, Mode=OneWay}" AutomationProperties.AutomationId="SortAscending" />
+                        <MenuItem Header="Sort cards: descending" Tag="Descending" Click="ChangeSortOrder" IsCheckable="True"
+                                  IsChecked="{Binding IsDescendingOrder, Mode=OneWay}" AutomationProperties.AutomationId="SortDescending" />
+                        <Separator />
                         <MenuItem Header="Theme: Follow Windows" Tag="System" Click="ChangeTheme" AutomationProperties.AutomationId="SystemTheme" />
                         <MenuItem Header="Theme: Light" Tag="Light" Click="ChangeTheme" AutomationProperties.AutomationId="LightTheme" />
                         <MenuItem Header="Theme: Dark" Tag="Dark" Click="ChangeTheme" AutomationProperties.AutomationId="DarkTheme" />

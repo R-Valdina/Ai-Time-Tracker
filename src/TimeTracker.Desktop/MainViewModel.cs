@@ -50,6 +50,24 @@ public sealed class MainViewModel : ObservableObject
     /// <summary>Indicates whether any historical entry needs midnight review.</summary>
     public bool HasReviewWarnings => EarlierRows.Any(row => row.NeedsReview);
 
+    /// <summary>Indicates the selected original card order in Settings.</summary>
+    public bool IsAddedOrder => Preferences.SortOrder == TrackerSortOrder.Added;
+    /// <summary>Indicates the selected ascending card order in Settings.</summary>
+    public bool IsAscendingOrder => Preferences.SortOrder == TrackerSortOrder.Ascending;
+    /// <summary>Indicates the selected descending card order in Settings.</summary>
+    public bool IsDescendingOrder => Preferences.SortOrder == TrackerSortOrder.Descending;
+
+    /// <summary>Persists the card-order preference and rearranges retained rows without changing timer state.</summary>
+    public void SetSortOrder(TrackerSortOrder sortOrder)
+    {
+        if (!Enum.IsDefined(sortOrder)) throw new ArgumentOutOfRangeException(nameof(sortOrder));
+        SavePreferences(Preferences with { SortOrder = sortOrder });
+        RebuildRows();
+        Notify(nameof(IsAddedOrder));
+        Notify(nameof(IsAscendingOrder));
+        Notify(nameof(IsDescendingOrder));
+    }
+
     /// <summary>Adds a new paused card using the editor's validated inputs.</summary>
     public void Add(string label, string color, string description = "") => Change(() => engine.Add(label, color, description));
     /// <summary>Updates a row's descriptive fields without changing its time.</summary>
@@ -148,8 +166,9 @@ public sealed class MainViewModel : ObservableObject
     /// <summary>Applies one shared collection-update algorithm to today's entries and earlier days.</summary>
     private void SynchronizeRows(ObservableCollection<TrackerRowViewModel> rows, bool historical)
     {
-        var desired = engine.Entries.Where(entry => (entry.Date != engine.Today || entry.IsArchived) == historical)
-            .OrderByDescending(entry => entry.Date).ToArray();
+        var desired = TrackerOrdering.Order(
+            engine.Entries.Where(entry => (entry.Date != engine.Today || entry.IsArchived) == historical),
+            Preferences.SortOrder).ToArray();
         var identifiers = desired.Select(entry => entry.Id).ToHashSet();
         foreach (var row in rows.Where(row => !identifiers.Contains(row.Id)).ToArray()) rows.Remove(row);
         for (var index = 0; index < desired.Length; index++)
@@ -168,11 +187,11 @@ public sealed class MainViewModel : ObservableObject
     /// <summary>Rejects malformed preference files before assigning WPF window dimensions.</summary>
     private static void ValidatePreferences(UserPreferences preferences)
     {
-        if (preferences.Theme is not ("System" or "Light" or "Dark") ||
+        if (!Enum.IsDefined(preferences.SortOrder) || preferences.Theme is not ("System" or "Light" or "Dark") ||
             !double.IsFinite(preferences.Width) || !double.IsFinite(preferences.Height) ||
             preferences.Width < 520 || preferences.Height < 260 ||
             preferences.Left is double left && !double.IsFinite(left) ||
             preferences.Top is double top && !double.IsFinite(top))
-            throw new InvalidDataException("Invalid theme or window size in preferences.json.");
+            throw new InvalidDataException("Invalid theme, sort order, or window size in preferences.json.");
     }
 }
