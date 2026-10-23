@@ -83,11 +83,21 @@ public partial class MainWindow : Window
     private void ToggleTracker(object sender, RoutedEventArgs e) => model.Toggle(Row(sender).Id);
     /// <summary>Finalizes the selected entry without deleting its total.</summary>
     private void EndTracker(object sender, RoutedEventArgs e) => model.End(Row(sender).Id);
-    /// <summary>Moves a finished tracker into retained history and opens that section for review.</summary>
-    private void ArchiveTracker(object sender, RoutedEventArgs e)
+    /// <summary>Archives a finished row, or restores a historical card for today without discarding saved time.</summary>
+    private void ChangeArchiveState(object sender, RoutedEventArgs e)
     {
-        model.Archive(Row(sender).Id);
-        HistorySection.IsExpanded = true;
+        var row = Row(sender);
+        if (row.CanUnarchive)
+        {
+            model.Unarchive(row.Id);
+            TrackerScrollArea.ScrollToTop();
+        }
+        else
+        {
+            model.Archive(row.Id);
+            HistorySection.IsExpanded = true;
+        }
+        AdjustHeight();
     }
     /// <summary>Acknowledges a potentially forgotten midnight timer.</summary>
     private void ReviewTracker(object sender, RoutedEventArgs e) => model.MarkReviewed(Row(sender).Id);

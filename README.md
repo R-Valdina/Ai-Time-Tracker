@@ -38,7 +38,7 @@ These are captures of the actual WPF application using disposable example data, 
 - **Start and stop as you work.** The same button changes between green Start and red Stop. Time accumulates across sessions; multiple timers may run at once when needed.
 - **See and copy your totals.** Rows show elapsed hours, minutes, and seconds, plus whole minutes. End an entry to finalize it and show both reporting formats directly on the row. Copy hours/minutes or total minutes from its menu. Partial minutes are not rounded up.
 - **Find cards quickly.** In **Settings**, choose **Sort cards: ascending** or **descending**. Numbers sort naturally (`CARD-2` before `CARD-10`); **added order** restores the original sequence. Your choice is remembered. Earlier days keeps newer dates first and sorts references within each date.
-- **Keep a useful history.** Archive ended trackers into **Earlier days** without losing their date, description, or total. Older rows are sorted newest first. Starting an older card creates or resumes today's unfinished entry; its previous total stays intact.
+- **Keep a useful history.** Archive ended trackers into **Earlier days** without losing their date, description, or total. Older rows are sorted newest first. Their menu shows **Unarchive**: this restores a paused, zero-time entry for today while retaining the historical total. An existing unfinished entry for today is reused without resetting or pausing it. **Start today** restores and starts an older card instead.
 - **Pause automatically.** Active timers pause on Windows lock, sleep, session disconnection, or normal exit. Unlocking or waking does not restart them. At local midnight they pause and show a review warning for potentially forgotten time.
 - **Make it comfortable.** Choose light, dark, or Follow Windows. Rows have colored borders and subtle shadows. The window grows with entries, supports resizing and maximizing, and remembers its size and placement.
 - **Use the keyboard or Narrator.** Buttons have card-specific accessibility names. Tab and Shift+Tab reach descriptions with text; empty descriptions are skipped. Keyboard focus has a neutral visual indicator.
@@ -50,7 +50,7 @@ Trackers remain until you delete them and confirm. You can edit references, desc
 1. Select **+ New tracker**, enter a reference and optional description, choose a color, and save.
 2. Select **Start** when you begin work on that card; select **Stop** when you switch tasks or take a break.
 3. Open the row's **…** menu to edit, copy a total, or **End entry**.
-4. Copy your totals into your timecard system. Use **Archive to Earlier days** when you want an ended card out of the main area.
+4. Copy your totals into your timecard system. Use **Archive to Earlier days** when you want an ended card out of the main area. In Earlier days, choose **Unarchive** to prepare that card for today again.
 5. Use **Settings** to change themes or open the data folder.
 
 ## Your saved information

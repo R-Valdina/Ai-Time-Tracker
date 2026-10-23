@@ -161,6 +161,48 @@ public sealed class TrackerWorkflowTests : IDisposable
         Assert.Empty(Find("TodayTrackers").FindAllDescendants(condition => condition.ByAutomationId("TrackerReference")));
     }
 
+    /// <summary>Restores both same-day archives and older retained entries, preserving history and any existing active session.</summary>
+    [Theory]
+    [InlineData(0, true)]
+    [InlineData(-1, false)]
+    public void UnarchiveRestoresPausedTodayWithoutLosingHistory(int dayOffset, bool archived)
+    {
+        Directory.CreateDirectory(dataDirectory);
+        var original = new TrackerEntry(Guid.NewGuid(), "RESTORE-3", TrackerColors.All[1],
+            DateOnly.FromDateTime(DateTime.Now).AddDays(dayOffset), TimeSpan.FromMinutes(12),
+            IsEnded: archived, NeedsReview: !archived, IsArchived: archived, Description: "Verify the restored card");
+        new JsonFileStore<TrackerDocument>(Path.Combine(dataDirectory, "tracker-data.json")).Save(new(1, [original]));
+        Launch();
+        Find("HistorySection").Patterns.ExpandCollapse.Pattern.Expand();
+        OpenRowMenu("UnarchiveTracker", "EarlierTrackers");
+        WaitUntil(() => ReadDocument().Entries.Count == 2, "Unarchive did not create today's paused entry.");
+        WaitForTrackerReference("RESTORE-3");
+        var current = ReadDocument().Entries.Single(entry => entry.Id != original.Id);
+        Assert.Equal(DateOnly.FromDateTime(DateTime.Now), current.Date);
+        Assert.Equal(TimeSpan.Zero, current.Elapsed);
+        Assert.False(current.IsEnded);
+        Assert.False(current.IsArchived);
+        Assert.Equal(original.Description, current.Description);
+        Assert.Equal(original.Color, current.Color);
+        Assert.Equal(original, ReadDocument().Entries.Single(entry => entry.Id == original.Id));
+        var today = Find("TodayTrackers");
+        WaitUntil(() => today.FindFirstDescendant(condition => condition.ByAutomationId("ToggleTimer")) is not null,
+            "The restored card was not rendered in today's list.");
+        var toggle = today.FindFirstDescendant(condition => condition.ByAutomationId("ToggleTimer"));
+        Assert.NotNull(toggle);
+        Assert.Equal("Start timer for RESTORE-3", toggle.Name);
+        Restart();
+        Assert.Equal(original, ReadDocument().Entries.Single(entry => entry.Id == original.Id));
+        Assert.Equal(TimeSpan.Zero, ReadDocument().Entries.Single(entry => entry.Id == current.Id).Elapsed);
+        Find("TodayTrackers").FindFirstDescendant(condition => condition.ByAutomationId("ToggleTimer"))!.AsButton().Invoke();
+        WaitUntil(() => Find("TodayTrackers").FindFirstDescendant(condition => condition.ByAutomationId("ToggleTimer"))!.Name == "Stop timer for RESTORE-3",
+            "The restored card could not be started.");
+        Find("HistorySection").Patterns.ExpandCollapse.Pattern.Expand();
+        OpenRowMenu("UnarchiveTracker", "EarlierTrackers");
+        Assert.Equal(2, ReadDocument().Entries.Count);
+        Assert.Equal("Stop timer for RESTORE-3", Find("TodayTrackers").FindFirstDescendant(condition => condition.ByAutomationId("ToggleTimer"))!.Name);
+    }
+
     /// <summary>Checks the generated data-item peers Narrator reads, rather than only the enclosing list labels.</summary>
     [Fact]
     public void TrackerItemsExposeCardNamesInsteadOfInternalTypeNames()
@@ -356,10 +398,15 @@ public sealed class TrackerWorkflowTests : IDisposable
     }
 
     /// <summary>Invokes an action in the first row's context menu through accessibility patterns.</summary>
-    private void OpenRowMenu(string actionId)
+    private void OpenRowMenu(string actionId, string? listId = null)
     {
-        Find("TrackerActions").AsButton().Invoke();
-        Find(actionId).AsMenuItem().Invoke();
+        var actions = listId is null ? Find("TrackerActions") :
+            Find(listId).FindFirstDescendant(condition => condition.ByAutomationId("TrackerActions"));
+        Assert.NotNull(actions);
+        actions.AsButton().Invoke();
+        var action = Find(actionId).AsMenuItem();
+        if (actionId == "UnarchiveTracker") Assert.Equal("Unarchive", action.Name);
+        action.Invoke();
     }
 
     /// <summary>Responds to the themed confirmation dialog using stable, language-independent identifiers.</summary>

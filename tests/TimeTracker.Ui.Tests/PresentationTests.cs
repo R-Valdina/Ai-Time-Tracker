@@ -213,6 +213,31 @@ public sealed class PresentationTests
         finally { if (Directory.Exists(directory)) Directory.Delete(directory, true); }
     }
 
+    /// <summary>Exposes only the appropriate archive/restore command as rows move between the current list and history.</summary>
+    [Fact]
+    public void ArchiveMenuActionTracksCurrentAndHistoricalRowState()
+    {
+        var entry = new TrackerEntry(Guid.NewGuid(), "CARD-3", TrackerColors.All[0],
+            new DateOnly(2026, 10, 23), TimeSpan.FromMinutes(12));
+        var row = new TrackerRowViewModel(entry, false, false);
+        Assert.False(row.CanChangeArchiveState);
+        Assert.Equal("ArchiveTracker", row.ArchiveActionId);
+        row.Refresh(entry with { IsEnded = true }, false);
+        Assert.True(row.CanArchive);
+        Assert.Equal("Archive to Earlier days", row.ArchiveActionText);
+        row.Refresh(entry with { IsEnded = true, IsArchived = true }, false);
+        Assert.False(row.CanArchive);
+        Assert.True(row.CanUnarchive);
+        Assert.True(row.CanChangeArchiveState);
+        Assert.Equal("Unarchive", row.ArchiveActionText);
+        Assert.Equal("UnarchiveTracker", row.ArchiveActionId);
+        row.Refresh(entry with { Date = entry.Date.AddDays(-1) }, false, isHistorical: true);
+        Assert.True(row.CanUnarchive);
+        Assert.True(row.CanChangeArchiveState);
+        Assert.Equal("Unarchive", row.ArchiveActionText);
+        Assert.Equal("UnarchiveTracker", row.ArchiveActionId);
+    }
+
     /// <summary>Checks that retained archived rows gain the new-day action when the calendar date changes.</summary>
     [Fact]
     public void ArchivedRowBecomesStartableOnTheFollowingDay()

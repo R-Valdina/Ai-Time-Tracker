@@ -44,7 +44,15 @@ public sealed class TrackerRowViewModel(TrackerEntry entry, bool running, bool h
     /// <summary>Prevents repeatedly ending an already-finalized row.</summary>
     public bool CanEnd => !entry.IsEnded;
     /// <summary>Allows finished entries to move into history once.</summary>
-    public bool CanArchive => entry.IsEnded && !entry.IsArchived;
+    public bool CanArchive => entry.IsEnded && !CanUnarchive;
+    /// <summary>Allows retained history, including older unarchived dates, to restore a card for today.</summary>
+    public bool CanUnarchive => historical || entry.IsArchived;
+    /// <summary>Names the action appropriate to the row's current list.</summary>
+    public string ArchiveActionText => CanUnarchive ? "Unarchive" : "Archive to Earlier days";
+    /// <summary>Exposes the current action to automation without leaving an Archive command on archived rows.</summary>
+    public string ArchiveActionId => CanUnarchive ? "UnarchiveTracker" : "ArchiveTracker";
+    /// <summary>Enables restoration from history, or archiving after a current entry is ended.</summary>
+    public bool CanChangeArchiveState => CanArchive || CanUnarchive;
     /// <summary>Indicates whether to display the finalized timecard summary on this row.</summary>
     public bool IsEnded => entry.IsEnded;
     /// <summary>Gets both final timecard formats directly on the retained entry.</summary>
@@ -65,7 +73,7 @@ public sealed class TrackerRowViewModel(TrackerEntry entry, bool running, bool h
         entry = updated;
         running = isRunning;
         historical = isHistorical ?? historical;
-        foreach (var name in new[] { nameof(Label), nameof(Description), nameof(HasDescription), nameof(AccessibleDescription), nameof(Color), nameof(Total), nameof(TotalMinutes), nameof(AccessibleTotal), nameof(AccessibleToggleName), nameof(AccessibleActionsName), nameof(IsRunning), nameof(IsHistorical), nameof(ToggleText), nameof(CanToggle), nameof(CanEnd), nameof(CanArchive), nameof(IsEnded), nameof(FinalTotal), nameof(NeedsReview), nameof(Status) })
+        foreach (var name in new[] { nameof(Label), nameof(Description), nameof(HasDescription), nameof(AccessibleDescription), nameof(Color), nameof(Total), nameof(TotalMinutes), nameof(AccessibleTotal), nameof(AccessibleToggleName), nameof(AccessibleActionsName), nameof(IsRunning), nameof(IsHistorical), nameof(ToggleText), nameof(CanToggle), nameof(CanEnd), nameof(CanArchive), nameof(CanUnarchive), nameof(ArchiveActionText), nameof(ArchiveActionId), nameof(CanChangeArchiveState), nameof(IsEnded), nameof(FinalTotal), nameof(NeedsReview), nameof(Status) })
             Notify(name);
     }
 }

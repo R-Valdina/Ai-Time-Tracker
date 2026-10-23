@@ -78,6 +78,8 @@ public sealed class MainViewModel : ObservableObject
     public void End(Guid id) => Change(() => engine.End(id));
     /// <summary>Retains a finished entry in Earlier days rather than Today's list.</summary>
     public void Archive(Guid id) => Change(() => engine.Archive(id));
+    /// <summary>Returns a retained card to today's list while preserving historical totals and any current session.</summary>
+    public void Unarchive(Guid id) => Change(() => engine.Unarchive(id));
     /// <summary>Deletes only the requested row after UI confirmation.</summary>
     public void Delete(Guid id) => Change(() => engine.Delete(id));
     /// <summary>Clears the midnight review marker without altering recorded time.</summary>

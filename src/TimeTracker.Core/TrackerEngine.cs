@@ -53,10 +53,7 @@ public sealed class TrackerEngine
         var entry = entries[FindIndex(id)];
         if (entry.Date != Today)
         {
-            // Reuse today's unfinished entry when returning to the same historical card.
-            var todayEntry = entries.LastOrDefault(candidate => candidate.Date == Today &&
-                candidate.Label == entry.Label && !candidate.IsEnded);
-            id = todayEntry?.Id ?? Add(entry.Label, entry.Color, entry.Description);
+            id = GetOrAddTodayEntry(entry);
             entry = entries[FindIndex(id)];
         }
         if (entry.IsEnded)
@@ -94,6 +91,17 @@ public sealed class TrackerEngine
         if (!entries[index].IsEnded)
             throw new InvalidOperationException("End the entry before archiving it.");
         entries[index] = entries[index] with { IsArchived = true };
+    }
+
+    /// <summary>Restores a card for today without erasing its historical total or automatically starting a timer.</summary>
+    /// <returns>An existing unfinished entry for today, or a fresh paused entry with zero time.</returns>
+    public Guid Unarchive(Guid id)
+    {
+        Advance();
+        var entry = entries[FindIndex(id)];
+        if (entry.Date == Today && !entry.IsArchived)
+            throw new InvalidOperationException("This entry is already in today's list.");
+        return GetOrAddTodayEntry(entry);
     }
 
     /// <summary>Dismisses the midnight warning after the user reviews a potentially forgotten timer.</summary>
@@ -157,6 +165,11 @@ public sealed class TrackerEngine
             catch (ArgumentException exception) { throw new InvalidDataException("The tracker file contains an invalid label, color, or description.", exception); }
         }
     }
+
+    /// <summary>Shares the new-day restore rule between Start today and Unarchive, retaining any current work.</summary>
+    private Guid GetOrAddTodayEntry(TrackerEntry source) =>
+        entries.LastOrDefault(candidate => candidate.Date == Today && candidate.Label == source.Label &&
+            !candidate.IsEnded && !candidate.IsArchived)?.Id ?? Add(source.Label, source.Color, source.Description);
 
     /// <summary>Finds a tracker or fails explicitly rather than editing the wrong row.</summary>
     private int FindIndex(Guid id)
