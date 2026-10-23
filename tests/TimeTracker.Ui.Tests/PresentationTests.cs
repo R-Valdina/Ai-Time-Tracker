@@ -310,7 +310,7 @@ public sealed class PresentationTests
             {
                 model.SetSortOrder(order);
                 DrainBindings();
-                var selected = Assert.Single(menu.Items.OfType<MenuItem>().Where(item => item.IsChecked));
+                var selected = Assert.Single(menu.Items.OfType<MenuItem>(), item => item.IsChecked);
                 Assert.Equal(order.ToString(), selected.Tag);
                 selected.ApplyTemplate();
                 var mark = Assert.IsType<System.Windows.Shapes.Path>(selected.Template.FindName("SelectionMark", selected));
