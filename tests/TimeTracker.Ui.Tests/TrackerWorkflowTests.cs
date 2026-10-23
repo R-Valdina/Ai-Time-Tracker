@@ -273,7 +273,7 @@ public sealed class TrackerWorkflowTests : IDisposable
         Assert.Equal($"Description for NOTE-1: {description}", archivedNote!.Name);
     }
 
-    /// <summary>Sorts through the actual Settings controls while keeping the running card and saved insertion order intact.</summary>
+    /// <summary>Sorts through the visible card-order controls while keeping the running card and saved insertion order intact.</summary>
     [Fact]
     public void SortOrderUsesCardNumbersPersistsAndFollowsEdits()
     {
@@ -302,11 +302,10 @@ public sealed class TrackerWorkflowTests : IDisposable
         WaitUntil(() => RowReferences("TodayTrackers").SequenceEqual(new[] { "CARD-2", "CARD-10", "CARD-20" }), "Editing the reference did not reposition its row.");
     }
 
-    /// <summary>Selects a real sorting menu item without relying on coordinates.</summary>
+    /// <summary>Selects the visible radio control through its native accessibility selection pattern.</summary>
     private void SelectSort(string automationId)
     {
-        Find("Settings").AsButton().Invoke();
-        Find(automationId).AsMenuItem().Invoke();
+        Find(automationId).Patterns.SelectionItem.Pattern.Select();
     }
 
     /// <summary>Reads reference controls in the same order a user encounters the displayed rows.</summary>
@@ -346,6 +345,17 @@ public sealed class TrackerWorkflowTests : IDisposable
         var preferencesPath = Path.Combine(dataDirectory, "preferences.json");
         WaitUntil(() => File.Exists(preferencesPath) && JsonSerializer.Deserialize<UserPreferences>(File.ReadAllText(preferencesPath))?.Theme == "Dark", "The mouse-selected theme was not saved.");
         WaitUntil(() => !settings.Properties.HasKeyboardFocus.Value, "Closing the menu restored focus to its mouse-clicked button.");
+        var ascending = Find("SortAscending").AsRadioButton();
+        ascending.Click();
+        WaitUntil(() => JsonSerializer.Deserialize<UserPreferences>(File.ReadAllText(preferencesPath))?.SortOrder == TrackerSortOrder.Ascending,
+            "Mouse selection did not save the ascending sort choice.");
+        WaitUntil(() => !ascending.Properties.HasKeyboardFocus.Value, "The mouse-selected sort choice retained focus.");
+        var descending = Find("SortDescending").AsRadioButton();
+        descending.Focus();
+        Keyboard.Type(VirtualKeyShort.SPACE);
+        WaitUntil(() => JsonSerializer.Deserialize<UserPreferences>(File.ReadAllText(preferencesPath))?.SortOrder == TrackerSortOrder.Descending,
+            "Keyboard selection did not save the descending sort choice.");
+        Assert.True(descending.Properties.HasKeyboardFocus.Value);
     }
 
     /// <summary>Launches a real executable; missing prerequisites fail instead of producing a zero-test success.</summary>

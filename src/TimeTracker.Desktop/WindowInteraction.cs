@@ -47,7 +47,7 @@ public static class WindowInteraction
     /// <summary>Registers menu cleanup once and defers focus changes until the current action has returned.</summary>
     private static void ButtonActionCompleted(object sender, RoutedEventArgs e)
     {
-        if (e.OriginalSource is not Button button) return;
+        if (e.OriginalSource is not ButtonBase button) return;
         var pointerAction = (bool)button.GetValue(PointerActionProperty);
         button.ClearValue(PointerActionProperty);
         if (button.ContextMenu is { } menu)
@@ -73,7 +73,7 @@ public static class WindowInteraction
         var element = e.OriginalSource as DependencyObject;
         while (element is not null)
         {
-            if (element is Button button) { button.SetValue(PointerActionProperty, true); return; }
+            if (element is ButtonBase button) { button.SetValue(PointerActionProperty, true); return; }
             element = element is Visual ? VisualTreeHelper.GetParent(element) : LogicalTreeHelper.GetParent(element);
         }
     }
@@ -95,12 +95,12 @@ public static class WindowInteraction
     /// <summary>Finds the opening button without retaining references to unrelated windows.</summary>
     private static void ReleaseMenuOwner(ContextMenu menu)
     {
-        if ((bool)menu.GetValue(PointerActionProperty) && menu.PlacementTarget is Button button)
+        if ((bool)menu.GetValue(PointerActionProperty) && menu.PlacementTarget is ButtonBase button)
             ScheduleFocusRelease(button);
     }
 
     /// <summary>Releases only the initiating button; validation fields and open-menu navigation retain their focus.</summary>
-    private static void ScheduleFocusRelease(Button button) => button.Dispatcher.BeginInvoke(DispatcherPriority.Background, () =>
+    private static void ScheduleFocusRelease(ButtonBase button) => button.Dispatcher.BeginInvoke(DispatcherPriority.Background, () =>
     {
         if (button.ContextMenu is { IsOpen: true }) return;
         var hadKeyboardFocus = button.IsKeyboardFocusWithin;

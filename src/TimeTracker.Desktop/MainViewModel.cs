@@ -50,17 +50,19 @@ public sealed class MainViewModel : ObservableObject
     /// <summary>Indicates whether any historical entry needs midnight review.</summary>
     public bool HasReviewWarnings => EarlierRows.Any(row => row.NeedsReview);
 
-    /// <summary>Indicates the selected original card order in Settings.</summary>
+    /// <summary>Indicates the selected original card order in the inline sort selector.</summary>
     public bool IsAddedOrder => Preferences.SortOrder == TrackerSortOrder.Added;
-    /// <summary>Indicates the selected ascending card order in Settings.</summary>
+    /// <summary>Indicates the selected ascending card order in the inline sort selector.</summary>
     public bool IsAscendingOrder => Preferences.SortOrder == TrackerSortOrder.Ascending;
-    /// <summary>Indicates the selected descending card order in Settings.</summary>
+    /// <summary>Indicates the selected descending card order in the inline sort selector.</summary>
     public bool IsDescendingOrder => Preferences.SortOrder == TrackerSortOrder.Descending;
 
     /// <summary>Persists the card-order preference and rearranges retained rows without changing timer state.</summary>
     public void SetSortOrder(TrackerSortOrder sortOrder)
     {
         if (!Enum.IsDefined(sortOrder)) throw new ArgumentOutOfRangeException(nameof(sortOrder));
+        // Restoring a checked binding must not recursively save or reorder the same selection.
+        if (Preferences.SortOrder == sortOrder) return;
         SavePreferences(Preferences with { SortOrder = sortOrder });
         RebuildRows();
         Notify(nameof(IsAddedOrder));

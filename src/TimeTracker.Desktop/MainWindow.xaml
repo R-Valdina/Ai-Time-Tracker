@@ -109,7 +109,33 @@
             <Button x:Name="NewTrackerButton" Grid.Column="1" Content="+ New tracker" Click="NewTracker"
                     Style="{StaticResource MainActionButton}" AutomationProperties.AutomationId="NewTracker" AutomationProperties.Name="New tracker" ToolTip="Create a tracker (Ctrl+N)" />
         </Grid>
-        <TextBlock Grid.Row="1" Text="{Binding Message}" TextWrapping="Wrap" Foreground="{DynamicResource WarningText}" Margin="0,0,0,8" AutomationProperties.AutomationId="StorageMessage" />
+        <StackPanel Grid.Row="1">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,0,12">
+                <TextBlock Text="Sort:" FontSize="12" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <Border Background="{DynamicResource RowSurface}" BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1" CornerRadius="7" Padding="3">
+                    <StackPanel x:Name="SortChoices" Orientation="Horizontal" KeyboardNavigation.TabNavigation="Once">
+                        <RadioButton Content="Original" GroupName="CardSortOrder" Tag="Added" Checked="ChangeSortOrder" Style="{StaticResource SortChoice}"
+                                     IsChecked="{Binding IsAddedOrder, Mode=OneWay}" AutomationProperties.AutomationId="SortAdded"
+                                     AutomationProperties.Name="Sort cards in original added order" ToolTip="Restore the order cards were added" />
+                        <RadioButton Content="Asc ↑" GroupName="CardSortOrder" Tag="Ascending" Checked="ChangeSortOrder" Style="{StaticResource SortChoice}"
+                                     IsChecked="{Binding IsAscendingOrder, Mode=OneWay}" AutomationProperties.AutomationId="SortAscending"
+                                     AutomationProperties.Name="Sort cards ascending" ToolTip="Card references from lowest to highest" />
+                        <RadioButton Content="Desc ↓" GroupName="CardSortOrder" Tag="Descending" Checked="ChangeSortOrder" Style="{StaticResource SortChoice}"
+                                     IsChecked="{Binding IsDescendingOrder, Mode=OneWay}" AutomationProperties.AutomationId="SortDescending"
+                                     AutomationProperties.Name="Sort cards descending" ToolTip="Card references from highest to lowest" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+            <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Foreground="{DynamicResource WarningText}" Margin="0,0,0,8" AutomationProperties.AutomationId="StorageMessage">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Message}" Value=""><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+        </StackPanel>
         <ScrollViewer x:Name="TrackerScrollArea" Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                       AutomationProperties.AutomationId="TrackerArea" AutomationProperties.Name="Trackers">
             <StackPanel>
@@ -130,13 +156,6 @@
             <Button x:Name="SettingsButton" Grid.Column="1" Content="Settings ▾" Style="{StaticResource MainActionButton}" Click="OpenMenu" AutomationProperties.AutomationId="Settings" AutomationProperties.Name="Settings">
                 <Button.ContextMenu>
                     <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
-                        <MenuItem Header="Sort cards: added order" Tag="Added" Click="ChangeSortOrder" IsCheckable="True"
-                                  IsChecked="{Binding IsAddedOrder, Mode=OneWay}" AutomationProperties.AutomationId="SortAdded" />
-                        <MenuItem Header="Sort cards: ascending" Tag="Ascending" Click="ChangeSortOrder" IsCheckable="True"
-                                  IsChecked="{Binding IsAscendingOrder, Mode=OneWay}" AutomationProperties.AutomationId="SortAscending" />
-                        <MenuItem Header="Sort cards: descending" Tag="Descending" Click="ChangeSortOrder" IsCheckable="True"
-                                  IsChecked="{Binding IsDescendingOrder, Mode=OneWay}" AutomationProperties.AutomationId="SortDescending" />
-                        <Separator />
                         <MenuItem Header="Theme: Follow Windows" Tag="System" Click="ChangeTheme" AutomationProperties.AutomationId="SystemTheme" />
                         <MenuItem Header="Theme: Light" Tag="Light" Click="ChangeTheme" AutomationProperties.AutomationId="LightTheme" />
                         <MenuItem Header="Theme: Dark" Tag="Dark" Click="ChangeTheme" AutomationProperties.AutomationId="DarkTheme" />

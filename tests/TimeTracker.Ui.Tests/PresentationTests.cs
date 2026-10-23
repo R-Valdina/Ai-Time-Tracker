@@ -106,7 +106,7 @@ public sealed class PresentationTests
                     var settings = main.FindName("SettingsButton") as Button;
                     Assert.NotNull(settings);
                     VerifyMenu(settings!.ContextMenu!, settings);
-                    VerifySortSelection(main, settings);
+                    VerifySortSelection(main);
                     Volatile.Write(ref phase, $"checking {theme} timer button states");
                     var entry = new TrackerEntry(Guid.NewGuid(), "COLOR-1", TrackerColors.All[0], new DateOnly(2026, 10, 20), TimeSpan.Zero);
                     var row = new TrackerRowViewModel(entry, false, false);
@@ -323,26 +323,34 @@ public sealed class PresentationTests
         finally { menu.IsOpen = false; }
     }
 
-    /// <summary>Checks the real menu binding and vector selection mark for each mutually exclusive sorting choice.</summary>
-    private static void VerifySortSelection(MainWindow window, Button settings)
+    /// <summary>Checks the visible radio group, selected styling, and single-choice binding in both themes.</summary>
+    private static void VerifySortSelection(MainWindow window)
     {
         var model = (MainViewModel)window.DataContext;
-        var menu = settings.ContextMenu!;
-        menu.IsOpen = true;
+        var choices = (StackPanel)window.FindName("SortChoices");
+        var radios = choices.Children.OfType<RadioButton>().ToArray();
+        Assert.Equal(3, radios.Length);
+        var settings = (Button)window.FindName("SettingsButton");
+        Assert.DoesNotContain(settings.ContextMenu!.Items.OfType<MenuItem>(), item => item.Tag is "Added" or "Ascending" or "Descending");
         try
         {
             foreach (var order in Enum.GetValues<TrackerSortOrder>())
             {
                 model.SetSortOrder(order);
                 DrainBindings();
-                var selected = Assert.Single(menu.Items.OfType<MenuItem>(), item => item.IsChecked);
+                var selected = Assert.Single(radios, radio => radio.IsChecked == true);
                 Assert.Equal(order.ToString(), selected.Tag);
-                selected.ApplyTemplate();
-                var mark = Assert.IsType<System.Windows.Shapes.Path>(selected.Template.FindName("SelectionMark", selected));
-                Assert.Equal(Visibility.Visible, mark.Visibility);
+                Assert.Equal(Palette("ControlHover"), SolidColor(selected.Background));
+                Assert.Equal(Palette("TextSecondary"), SolidColor(selected.BorderBrush));
+                foreach (var radio in radios)
+                {
+                    Assert.True(radio.IsVisible);
+                    Assert.NotNull(radio.FocusVisualStyle);
+                    VerifyTextOutsideEffects(radio);
+                }
             }
         }
-        finally { menu.IsOpen = false; model.SetSortOrder(TrackerSortOrder.Added); }
+        finally { model.SetSortOrder(TrackerSortOrder.Added); }
     }
 
     /// <summary>Checks actual main-window, editor, confirmation, timer, and row-menu controls through their shared templates.</summary>

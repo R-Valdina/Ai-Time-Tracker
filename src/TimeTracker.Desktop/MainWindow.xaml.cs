@@ -121,9 +121,9 @@ public partial class MainWindow : Window
         { model.Delete(row.Id); AdjustHeight(); }
     }
 
-    /// <summary>Applies the selected card-reference order from the shared Settings menu.</summary>
+    /// <summary>Applies the inline radio selection for mouse, keyboard, and UI Automation activation.</summary>
     private void ChangeSortOrder(object sender, RoutedEventArgs e) =>
-        model.SetSortOrder(Enum.Parse<TrackerSortOrder>((string)((MenuItem)sender).Tag));
+        model.SetSortOrder(Enum.Parse<TrackerSortOrder>((string)((RadioButton)sender).Tag));
 
     /// <summary>Persists and immediately applies the chosen theme.</summary>
     private void ChangeTheme(object sender, RoutedEventArgs e)
@@ -196,7 +196,7 @@ public partial class MainWindow : Window
         var rows = Math.Max(1, model.TodayRows.Count) + (HistorySection.IsExpanded ? model.EarlierRows.Count : 0);
         var visibleRows = model.TodayRows.Concat(HistorySection.IsExpanded ? model.EarlierRows : []).ToArray();
         var detailHeight = visibleRows.Count(row => row.NeedsReview) * 28;
-        Height = Math.Clamp(255 + rows * 170 + detailHeight, MinHeight, Math.Max(MinHeight, SystemParameters.WorkArea.Height - 40));
+        Height = Math.Clamp(280 + rows * 170 + detailHeight, MinHeight, Math.Max(MinHeight, SystemParameters.WorkArea.Height - 40));
         if (Top + Height > SystemParameters.WorkArea.Bottom) Top = Math.Max(SystemParameters.WorkArea.Top, SystemParameters.WorkArea.Bottom - Height);
         automaticResize = false;
     }

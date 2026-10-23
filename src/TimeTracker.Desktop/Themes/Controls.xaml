@@ -33,7 +33,7 @@
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
-    <Style TargetType="Button" BasedOn="{StaticResource ActionTypography}">
+    <Style x:Key="ActionButtonBase" TargetType="ButtonBase" BasedOn="{StaticResource ActionTypography}">
         <Setter Property="FocusVisualStyle" Value="{StaticResource KeyboardActionFocus}" />
         <Setter Property="Background" Value="{DynamicResource RowSurface}" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
@@ -45,7 +45,7 @@
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="Button">
+                <ControlTemplate TargetType="ButtonBase">
                     <Grid SnapsToDevicePixels="True">
                         <Border x:Name="Chrome" Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
@@ -63,6 +63,21 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+    </Style>
+    <Style TargetType="Button" BasedOn="{StaticResource ActionButtonBase}" />
+    <!-- Radio choices share the action template, including sharp text and neutral keyboard focus. -->
+    <Style x:Key="SortChoice" TargetType="RadioButton" BasedOn="{StaticResource ActionButtonBase}">
+        <Setter Property="Padding" Value="10,4" />
+        <Setter Property="MinHeight" Value="28" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Style.Triggers>
+            <Trigger Property="IsChecked" Value="True">
+                <Setter Property="Background" Value="{DynamicResource ControlHover}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource TextSecondary}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
     <Style x:Key="RaisedButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
         <Style.Resources>
@@ -188,7 +203,8 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Separator">
-                    <Border Height="1" Background="{DynamicResource ControlBorder}" />
+                    <!-- Separate menu groups with spacing rather than a divider stroke. -->
+                    <Border Height="1" />
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
