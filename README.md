@@ -61,7 +61,7 @@ Choose **Settings → Open data folder**, or paste `%LOCALAPPDATA%\TimeTracker` 
 | --- | --- |
 | `tracker-data.json` | Card references, descriptions, dates, colors, totals, and ended/archive/review flags |
 | `tracker-data.backup.json` | Previous successful tracker save |
-| `preferences.json` | Theme and window size/placement |
+| `preferences.json` | Theme, card sorting, and window size/placement |
 | `preferences.backup.json` | Previous successful preference save |
 | `time-tracker.lock` | Prevents concurrent writers; contains no tracker records |
 

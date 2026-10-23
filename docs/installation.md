@@ -29,7 +29,7 @@ Portable use changes where the application files live, not where tracker data is
 
 In the app, select **Settings → Open data folder**, or paste `%LOCALAPPDATA%\TimeTracker` into File Explorer.
 
-`tracker-data.json` contains your entries and totals. `preferences.json` contains your theme and window placement. Each has a `.backup.json` file. Close the app before copying this folder as a backup. These readable files are not encrypted.
+`tracker-data.json` contains your entries and totals. `preferences.json` contains your theme, card sort order, and window placement. Each has a `.backup.json` file. Close the app before copying this folder as a backup. These readable files are not encrypted.
 
 ## Update
 
