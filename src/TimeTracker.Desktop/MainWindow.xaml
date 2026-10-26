@@ -114,13 +114,10 @@
                 <TextBlock Text="Sort:" FontSize="12" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0" />
                 <Border Background="{DynamicResource RowSurface}" BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1" CornerRadius="7" Padding="3">
                     <StackPanel x:Name="SortChoices" Orientation="Horizontal" KeyboardNavigation.TabNavigation="Once">
-                        <RadioButton Content="Original" GroupName="CardSortOrder" Tag="Added" Checked="ChangeSortOrder" Style="{StaticResource SortChoice}"
-                                     IsChecked="{Binding IsAddedOrder, Mode=OneWay}" AutomationProperties.AutomationId="SortAdded"
-                                     AutomationProperties.Name="Sort cards in original added order" ToolTip="Restore the order cards were added" />
-                        <RadioButton Content="Asc ↑" GroupName="CardSortOrder" Tag="Ascending" Checked="ChangeSortOrder" Style="{StaticResource SortChoice}"
+                        <RadioButton Content="A–Z ↑" GroupName="CardSortOrder" Tag="Ascending" Checked="ChangeSortOrder" Style="{StaticResource SortChoice}"
                                      IsChecked="{Binding IsAscendingOrder, Mode=OneWay}" AutomationProperties.AutomationId="SortAscending"
                                      AutomationProperties.Name="Sort cards ascending" ToolTip="Card references from lowest to highest" />
-                        <RadioButton Content="Desc ↓" GroupName="CardSortOrder" Tag="Descending" Checked="ChangeSortOrder" Style="{StaticResource SortChoice}"
+                        <RadioButton Content="Z–A ↓" GroupName="CardSortOrder" Tag="Descending" Checked="ChangeSortOrder" Style="{StaticResource SortChoice}"
                                      IsChecked="{Binding IsDescendingOrder, Mode=OneWay}" AutomationProperties.AutomationId="SortDescending"
                                      AutomationProperties.Name="Sort cards descending" ToolTip="Card references from highest to lowest" />
                     </StackPanel>

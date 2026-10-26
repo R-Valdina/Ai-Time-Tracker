@@ -281,8 +281,8 @@ public sealed class TrackerWorkflowTests : IDisposable
         CreateTracker("CARD-10");
         CreateTracker("CARD-1");
         CreateTracker("CARD-2");
-        ToggleButtons()[0].Invoke();
-        WaitUntil(() => ToggleButtons()[0].Name == "Stop timer for CARD-10", "The test timer did not start.");
+        ToggleButtons()[2].Invoke();
+        WaitUntil(() => ToggleButtons()[2].Name == "Stop timer for CARD-10", "The test timer did not start.");
         SelectSort("SortAscending");
         WaitUntil(() => RowReferences("TodayTrackers").SequenceEqual(new[] { "CARD-1", "CARD-2", "CARD-10" }), "Ascending card order was not applied.");
         Assert.Equal("Stop timer for CARD-10", ToggleButtons()[2].Name);
@@ -292,8 +292,6 @@ public sealed class TrackerWorkflowTests : IDisposable
         Assert.Equal(new[] { "CARD-10", "CARD-1", "CARD-2" }, ReadDocument().Entries.Select(entry => entry.Label));
         Restart();
         Assert.Equal(new[] { "CARD-10", "CARD-2", "CARD-1" }, RowReferences("TodayTrackers"));
-        SelectSort("SortAdded");
-        WaitUntil(() => RowReferences("TodayTrackers").SequenceEqual(new[] { "CARD-10", "CARD-1", "CARD-2" }), "Original added order was not restored.");
         SelectSort("SortAscending");
         WaitUntil(() => RowReferences("TodayTrackers")[0] == "CARD-1", "Ascending order was not restored.");
         OpenRowMenu("EditTracker");

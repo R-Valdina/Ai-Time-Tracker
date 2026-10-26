@@ -96,11 +96,11 @@ public sealed class JsonFileStoreTests : IDisposable
     }
 
     [Fact]
-    public void OlderPreferencesWithoutSortOrderRetainAddedOrder()
+    public void OlderPreferencesWithoutSortOrderUseAscendingOrder()
     {
         var preferences = System.Text.Json.JsonSerializer.Deserialize<UserPreferences>("{\"Theme\":\"Light\"}");
         Assert.NotNull(preferences);
-        Assert.Equal(TrackerSortOrder.Added, preferences.SortOrder);
+        Assert.Equal(TrackerSortOrder.Ascending, preferences.SortOrder);
     }
 
     /// <summary>Removes only the directory created by this test instance.</summary>

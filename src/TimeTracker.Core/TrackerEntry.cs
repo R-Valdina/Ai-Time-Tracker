@@ -28,7 +28,7 @@ public sealed record UserPreferences(
     double? Top = null,
     bool Maximized = false,
     bool ManuallySized = false,
-    TrackerSortOrder SortOrder = TrackerSortOrder.Added);
+    TrackerSortOrder SortOrder = TrackerSortOrder.Ascending);
 
 /// <summary>Shared color choices used by both the editor and validation.</summary>
 public static class TrackerColors

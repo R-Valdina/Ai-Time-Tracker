@@ -187,14 +187,17 @@ public sealed class PresentationTests
         try
         {
             new JsonFileStore<TrackerDocument>(Path.Combine(directory, "tracker-data.json")).Save(new(1, entries));
+            new JsonFileStore<UserPreferences>(Path.Combine(directory, "preferences.json"))
+                .Save(new UserPreferences(SortOrder: TrackerSortOrder.Added));
             var model = new MainViewModel(directory);
-            var firstRow = model.TodayRows[0];
+            Assert.True(model.IsAscendingOrder);
+            Assert.Equal(new[] { "CARD-2", "CARD-10" }, model.TodayRows.Select(row => row.Label));
+            var firstRow = model.TodayRows.Single(row => row.Label == "CARD-10");
             model.Toggle(firstRow.Id);
             model.SetSortOrder(TrackerSortOrder.Ascending);
             Assert.Same(firstRow, model.TodayRows[1]);
             Assert.True(firstRow.IsRunning);
             Assert.True(model.IsAscendingOrder);
-            Assert.False(model.IsAddedOrder);
             Assert.False(model.IsDescendingOrder);
             Assert.Equal(new[] { "OLD-2", "OLD-10", "OLD-1" }, model.EarlierRows.Select(row => row.Label));
             model.SetSortOrder(TrackerSortOrder.Descending);
@@ -204,9 +207,9 @@ public sealed class PresentationTests
             Assert.True(restored.IsDescendingOrder);
             Assert.Equal(new[] { "CARD-10", "CARD-2" }, restored.TodayRows.Select(row => row.Label));
             Assert.Equal(new[] { "OLD-10", "OLD-2", "OLD-1" }, restored.EarlierRows.Select(row => row.Label));
-            model.SetSortOrder(TrackerSortOrder.Added);
-            Assert.Same(firstRow, model.TodayRows[0]);
-            Assert.True(model.IsAddedOrder);
+            model.SetSortOrder(TrackerSortOrder.Ascending);
+            Assert.Same(firstRow, model.TodayRows[1]);
+            Assert.True(model.IsAscendingOrder);
             Assert.All(entries, entry => Assert.Contains(model.TodayRows.Concat(model.EarlierRows), row => row.Id == entry.Id));
             model.PauseAll();
         }
@@ -329,12 +332,12 @@ public sealed class PresentationTests
         var model = (MainViewModel)window.DataContext;
         var choices = (StackPanel)window.FindName("SortChoices");
         var radios = choices.Children.OfType<RadioButton>().ToArray();
-        Assert.Equal(3, radios.Length);
+        Assert.Equal(2, radios.Length);
         var settings = (Button)window.FindName("SettingsButton");
         Assert.DoesNotContain(settings.ContextMenu!.Items.OfType<MenuItem>(), item => item.Tag is "Added" or "Ascending" or "Descending");
         try
         {
-            foreach (var order in Enum.GetValues<TrackerSortOrder>())
+            foreach (var order in new[] { TrackerSortOrder.Ascending, TrackerSortOrder.Descending })
             {
                 model.SetSortOrder(order);
                 DrainBindings();
@@ -350,7 +353,7 @@ public sealed class PresentationTests
                 }
             }
         }
-        finally { model.SetSortOrder(TrackerSortOrder.Added); }
+        finally { model.SetSortOrder(TrackerSortOrder.Ascending); }
     }
 
     /// <summary>Checks actual main-window, editor, confirmation, timer, and row-menu controls through their shared templates.</summary>

@@ -23,7 +23,10 @@ public sealed class MainViewModel : ObservableObject
         var loaded = trackerStore.Load(() => TrackerDocument.Empty);
         var preferences = preferencesStore.Load(() => new UserPreferences());
         engine = new TrackerEngine(loaded.Value);
-        Preferences = preferences.Value;
+        // Older versions offered insertion order; use ascending when restoring that retired choice.
+        Preferences = preferences.Value.SortOrder == TrackerSortOrder.Added
+            ? preferences.Value with { SortOrder = TrackerSortOrder.Ascending }
+            : preferences.Value;
         message = loaded.Warning ?? preferences.Warning ?? "";
         displayedDate = engine.Today;
         RebuildRows();
@@ -50,8 +53,6 @@ public sealed class MainViewModel : ObservableObject
     /// <summary>Indicates whether any historical entry needs midnight review.</summary>
     public bool HasReviewWarnings => EarlierRows.Any(row => row.NeedsReview);
 
-    /// <summary>Indicates the selected original card order in the inline sort selector.</summary>
-    public bool IsAddedOrder => Preferences.SortOrder == TrackerSortOrder.Added;
     /// <summary>Indicates the selected ascending card order in the inline sort selector.</summary>
     public bool IsAscendingOrder => Preferences.SortOrder == TrackerSortOrder.Ascending;
     /// <summary>Indicates the selected descending card order in the inline sort selector.</summary>
@@ -65,7 +66,6 @@ public sealed class MainViewModel : ObservableObject
         if (Preferences.SortOrder == sortOrder) return;
         SavePreferences(Preferences with { SortOrder = sortOrder });
         RebuildRows();
-        Notify(nameof(IsAddedOrder));
         Notify(nameof(IsAscendingOrder));
         Notify(nameof(IsDescendingOrder));
     }

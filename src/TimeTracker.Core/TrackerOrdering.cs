@@ -7,7 +7,7 @@ namespace TimeTracker.Core;
 [JsonConverter(typeof(JsonStringEnumConverter<TrackerSortOrder>))]
 public enum TrackerSortOrder
 {
-    /// <summary>Keeps entries in the sequence they were added.</summary>
+    /// <summary>Retains the legacy insertion-order value so older preference files remain readable.</summary>
     Added,
     /// <summary>Sorts references from lowest to highest using natural numeric ordering.</summary>
     Ascending,
