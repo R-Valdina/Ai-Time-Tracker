@@ -58,6 +58,15 @@ public sealed class MainViewModel : ObservableObject
     /// <summary>Indicates the selected descending card order in the inline sort selector.</summary>
     public bool IsDescendingOrder => Preferences.SortOrder == TrackerSortOrder.Descending;
 
+    /// <summary>Gets the upper letter in the current sort-direction icon.</summary>
+    public string SortTopLetter => IsAscendingOrder ? "A" : "Z";
+    /// <summary>Gets the lower letter in the current sort-direction icon.</summary>
+    public string SortBottomLetter => IsAscendingOrder ? "Z" : "A";
+    /// <summary>Describes the active direction and the next action for screen readers and the tooltip.</summary>
+    public string SortActionName => IsAscendingOrder
+        ? "Sort cards: A to Z. Activate to sort Z to A."
+        : "Sort cards: Z to A. Activate to sort A to Z.";
+
     /// <summary>Persists the card-order preference and rearranges retained rows without changing timer state.</summary>
     public void SetSortOrder(TrackerSortOrder sortOrder)
     {
@@ -68,6 +77,9 @@ public sealed class MainViewModel : ObservableObject
         RebuildRows();
         Notify(nameof(IsAscendingOrder));
         Notify(nameof(IsDescendingOrder));
+        Notify(nameof(SortTopLetter));
+        Notify(nameof(SortBottomLetter));
+        Notify(nameof(SortActionName));
     }
 
     /// <summary>Adds a new paused card using the editor's validated inputs.</summary>

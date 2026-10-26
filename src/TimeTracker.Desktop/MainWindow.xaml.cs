@@ -121,9 +121,9 @@ public partial class MainWindow : Window
         { model.Delete(row.Id); AdjustHeight(); }
     }
 
-    /// <summary>Applies the inline radio selection for mouse, keyboard, and UI Automation activation.</summary>
+    /// <summary>Toggles the sort direction for mouse, keyboard, and UI Automation activation.</summary>
     private void ChangeSortOrder(object sender, RoutedEventArgs e) =>
-        model.SetSortOrder(Enum.Parse<TrackerSortOrder>((string)((RadioButton)sender).Tag));
+        model.SetSortOrder(model.IsAscendingOrder ? TrackerSortOrder.Descending : TrackerSortOrder.Ascending);
 
     /// <summary>Persists and immediately applies the chosen theme.</summary>
     private void ChangeTheme(object sender, RoutedEventArgs e)

@@ -112,16 +112,21 @@
         <StackPanel Grid.Row="1">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,0,12">
                 <TextBlock Text="Sort:" FontSize="12" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                <Border Background="{DynamicResource RowSurface}" BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1" CornerRadius="7" Padding="3">
-                    <StackPanel x:Name="SortChoices" Orientation="Horizontal" KeyboardNavigation.TabNavigation="Once">
-                        <RadioButton Content="A–Z ↑" GroupName="CardSortOrder" Tag="Ascending" Checked="ChangeSortOrder" Style="{StaticResource SortChoice}"
-                                     IsChecked="{Binding IsAscendingOrder, Mode=OneWay}" AutomationProperties.AutomationId="SortAscending"
-                                     AutomationProperties.Name="Sort cards ascending" ToolTip="Card references from lowest to highest" />
-                        <RadioButton Content="Z–A ↓" GroupName="CardSortOrder" Tag="Descending" Checked="ChangeSortOrder" Style="{StaticResource SortChoice}"
-                                     IsChecked="{Binding IsDescendingOrder, Mode=OneWay}" AutomationProperties.AutomationId="SortDescending"
-                                     AutomationProperties.Name="Sort cards descending" ToolTip="Card references from highest to lowest" />
+                <Button x:Name="SortDirectionButton" Click="ChangeSortOrder" Style="{StaticResource SortDirection}"
+                        AutomationProperties.AutomationId="SortDirection" AutomationProperties.Name="{Binding SortActionName}"
+                        ToolTip="{Binding SortActionName}">
+                    <StackPanel Orientation="Horizontal" IsHitTestVisible="False">
+                        <StackPanel Margin="0,0,5,0">
+                            <TextBlock x:Name="SortTopLetter" Text="{Binding SortTopLetter}" FontSize="14" FontWeight="Bold" LineHeight="15" LineStackingStrategy="BlockLineHeight" />
+                            <TextBlock x:Name="SortBottomLetter" Text="{Binding SortBottomLetter}" FontSize="14" FontWeight="Bold" LineHeight="15" LineStackingStrategy="BlockLineHeight" />
+                        </StackPanel>
+                        <!-- Vector arrows stay sharp at any display scale and follow the theme text color. -->
+                        <Path Data="M 2,9 L 9,2 L 16,9 M 9,2 L 9,28 M 16,21 L 23,28 L 30,21 M 23,2 L 23,28"
+                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="3"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                              Width="28" Height="30" Stretch="Uniform" VerticalAlignment="Center" />
                     </StackPanel>
-                </Border>
+                </Button>
             </StackPanel>
             <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Foreground="{DynamicResource WarningText}" Margin="0,0,0,8" AutomationProperties.AutomationId="StorageMessage">
                 <TextBlock.Style>

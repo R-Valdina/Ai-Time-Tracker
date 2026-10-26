@@ -65,19 +65,11 @@
         </Setter>
     </Style>
     <Style TargetType="Button" BasedOn="{StaticResource ActionButtonBase}" />
-    <!-- Radio choices share the action template, including sharp text and neutral keyboard focus. -->
-    <Style x:Key="SortChoice" TargetType="RadioButton" BasedOn="{StaticResource ActionButtonBase}">
-        <Setter Property="Padding" Value="10,4" />
-        <Setter Property="MinHeight" Value="28" />
-        <Setter Property="FontSize" Value="12" />
+    <!-- A transparent sort icon reuses the action template and accessible keyboard focus. -->
+    <Style x:Key="SortDirection" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Padding" Value="4,2" />
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderBrush" Value="Transparent" />
-        <Style.Triggers>
-            <Trigger Property="IsChecked" Value="True">
-                <Setter Property="Background" Value="{DynamicResource ControlHover}" />
-                <Setter Property="BorderBrush" Value="{DynamicResource TextSecondary}" />
-            </Trigger>
-        </Style.Triggers>
+        <Setter Property="BorderThickness" Value="0" />
     </Style>
     <Style x:Key="RaisedButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
         <Style.Resources>

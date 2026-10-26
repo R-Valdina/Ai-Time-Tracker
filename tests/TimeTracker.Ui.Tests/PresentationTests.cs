@@ -326,31 +326,25 @@ public sealed class PresentationTests
         finally { menu.IsOpen = false; }
     }
 
-    /// <summary>Checks the visible radio group, selected styling, and single-choice binding in both themes.</summary>
+    /// <summary>Checks the borderless icon and its changing letters and accessible action in both themes.</summary>
     private static void VerifySortSelection(MainWindow window)
     {
         var model = (MainViewModel)window.DataContext;
-        var choices = (StackPanel)window.FindName("SortChoices");
-        var radios = choices.Children.OfType<RadioButton>().ToArray();
-        Assert.Equal(2, radios.Length);
-        var settings = (Button)window.FindName("SettingsButton");
-        Assert.DoesNotContain(settings.ContextMenu!.Items.OfType<MenuItem>(), item => item.Tag is "Added" or "Ascending" or "Descending");
+        var button = (Button)window.FindName("SortDirectionButton");
         try
         {
             foreach (var order in new[] { TrackerSortOrder.Ascending, TrackerSortOrder.Descending })
             {
                 model.SetSortOrder(order);
                 DrainBindings();
-                var selected = Assert.Single(radios, radio => radio.IsChecked == true);
-                Assert.Equal(order.ToString(), selected.Tag);
-                Assert.Equal(Palette("ControlHover"), SolidColor(selected.Background));
-                Assert.Equal(Palette("TextSecondary"), SolidColor(selected.BorderBrush));
-                foreach (var radio in radios)
-                {
-                    Assert.True(radio.IsVisible);
-                    Assert.NotNull(radio.FocusVisualStyle);
-                    VerifyTextOutsideEffects(radio);
-                }
+                Assert.True(button.IsVisible);
+                Assert.Equal(new Thickness(0), button.BorderThickness);
+                Assert.Equal(Colors.Transparent, SolidColor(button.Background));
+                Assert.Equal(order == TrackerSortOrder.Ascending ? "A" : "Z", ((TextBlock)window.FindName("SortTopLetter")).Text);
+                Assert.Equal(order == TrackerSortOrder.Ascending ? "Z" : "A", ((TextBlock)window.FindName("SortBottomLetter")).Text);
+                Assert.Equal(model.SortActionName, AutomationProperties.GetName(button));
+                Assert.NotNull(button.FocusVisualStyle);
+                VerifyTextOutsideEffects(button);
             }
         }
         finally { model.SetSortOrder(TrackerSortOrder.Ascending); }
