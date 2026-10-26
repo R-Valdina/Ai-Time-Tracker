@@ -11,7 +11,7 @@ It works offline. There are no accounts, subscriptions, cloud services, or datab
 **[Download Time Tracker for Windows](https://github.com/R-Valdina/Ai-Time-Tracker/releases/latest)**
 
 1. Open the download link above and find **Assets** on the release page.
-2. Download **`TimeTracker-Setup-0.1.0-win-x64.exe`** for a Windows 11 PC with a 64-bit Intel or AMD processor.
+2. Download **`TimeTracker-Setup-0.1.1-win-x64.exe`** for a Windows 11 PC with a 64-bit Intel or AMD processor.
 3. Close an older copy of Time Tracker, if it is running, then double-click the installer.
 4. Follow the setup wizard. It installs for your Windows user and creates desktop and Start menu shortcuts.
 5. Open **Time Tracker** and select **+ New tracker** to add your first card reference.
@@ -20,7 +20,7 @@ It works offline. There are no accounts, subscriptions, cloud services, or datab
 
 The initial installer is unsigned, so Windows may show an unknown-publisher or reputation prompt. Follow your device's security policy; signing is not included in this release.
 
-Prefer to run without installing? Download the release's **`TimeTracker-0.1.0-win-x64.zip`**, extract the entire folder, and open `TimeTracker.exe`. Keep the extracted files together.
+Prefer to run without installing? Download the release's **`TimeTracker-0.1.1-win-x64.zip`**, extract the entire folder, and open `TimeTracker.exe`. Keep the extracted files together.
 
 The download also includes **README.txt**, **INSTALL.txt**, and **SHA256SUMS.txt**. The same written guides are installed beside the app. See the [full installation, update, and removal guide](docs/installation.md) for details.
 
