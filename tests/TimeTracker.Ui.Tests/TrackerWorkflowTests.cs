@@ -217,11 +217,11 @@ public sealed class TrackerWorkflowTests : IDisposable
         Assert.Equal(new[] { "Tracker NARRATOR-1", "Tracker NARRATOR-2" }, items.Select(item => item.Name).ToArray());
 
         OpenRowMenu("EditTracker");
-        Find("TrackerLabel").AsTextBox().Text = "NARRATOR-RENAMED";
+        Find("TrackerLabel").AsTextBox().Text = "NARRATOR-1-RENAMED";
         Find("SaveTracker").AsButton().Invoke();
-        WaitForTrackerReference("NARRATOR-RENAMED");
+        WaitForTrackerReference("NARRATOR-1-RENAMED");
         WaitUntil(() => today.FindFirstDescendant(condition => condition.ByControlType(ControlType.DataItem)
-            .And(condition.ByName("Tracker NARRATOR-RENAMED"))) is not null, "The accessible row name did not follow the edited card reference.");
+            .And(condition.ByName("Tracker NARRATOR-1-RENAMED"))) is not null, "The accessible row name did not follow the edited card reference.");
 
         OpenRowMenu("EndTracker");
         WaitUntil(() => !ToggleButtons()[0].IsEnabled, "Ending did not finish the entry.");
@@ -229,7 +229,7 @@ public sealed class TrackerWorkflowTests : IDisposable
         var history = Find("EarlierTrackers");
         WaitUntil(() => history.FindAllDescendants(condition => condition.ByControlType(ControlType.DataItem)).Length == 1,
             "The archived accessibility item was not exposed.");
-        Assert.Equal("Tracker NARRATOR-RENAMED", Assert.Single(history.FindAllDescendants(condition => condition.ByControlType(ControlType.DataItem))).Name);
+        Assert.Equal("Tracker NARRATOR-1-RENAMED", Assert.Single(history.FindAllDescendants(condition => condition.ByControlType(ControlType.DataItem))).Name);
         Assert.Equal("Tracker NARRATOR-2", Assert.Single(today.FindAllDescendants(condition => condition.ByControlType(ControlType.DataItem))).Name);
     }
 
@@ -240,7 +240,7 @@ public sealed class TrackerWorkflowTests : IDisposable
         Launch();
         const string description = "Verify acceptance criteria and investigate the intermittent login failure.";
         CreateTracker("NOTE-1", description);
-        CreateTracker("EMPTY-2");
+        CreateTracker("NOTE-2");
         var notes = Find("TodayTrackers").FindAllDescendants(condition => condition.ByAutomationId("TrackerDescriptionText"));
         Assert.Equal(2, notes.Length);
         Assert.Equal($"Description for NOTE-1: {description}", notes[0].Name);
