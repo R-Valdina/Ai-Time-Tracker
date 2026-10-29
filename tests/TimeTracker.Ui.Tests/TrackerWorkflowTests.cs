@@ -391,7 +391,7 @@ public sealed class TrackerWorkflowTests : IDisposable
         WaitUntil(() => window!.ModalWindows.Length == 0, "Escape did not cancel the correction.");
         Assert.Equal(TimeSpan.FromMinutes(75), ReadDocument().Entries[0].Elapsed);
         Restart();
-        Assert.Equal("01:15:00", Find("ElapsedTime").AsLabel().Text);
+        Assert.Equal("CORRECT-1: 01:15:00", Find("ElapsedTime").Name);
         OpenRowMenu("EndTracker");
         Find("AddTime").AsButton().Invoke();
         Find("AdjustmentDuration").AsTextBox().Text = "5";
@@ -402,7 +402,7 @@ public sealed class TrackerWorkflowTests : IDisposable
             "Reset did not clear and reopen the ended tracker.");
         Assert.Equal("Start timer for CORRECT-1", ToggleButtons()[0].Name);
         ToggleButtons()[0].Invoke();
-        WaitUntil(() => Find("ElapsedTime").AsLabel().Text != "00:00:00", "The reset tracker could not be restarted.");
+        WaitUntil(() => !Find("ElapsedTime").Name.EndsWith("00:00:00", StringComparison.Ordinal), "The reset tracker could not be restarted.");
         Find("ResetTime").AsButton().Invoke();
         WaitUntil(() => ToggleButtons()[0].Name == "Start timer for CORRECT-1", "Reset did not pause the running timer.");
         Restart();
