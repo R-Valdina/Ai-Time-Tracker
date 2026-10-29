@@ -232,7 +232,7 @@
                         <Border x:Name="MenuSurface" Background="{TemplateBinding Background}" CornerRadius="5"
                                 BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
                                 Effect="{StaticResource MenuSurfaceShadow}" />
-                        <Border BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}">
+                        <Border x:Name="MenuContent" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}">
                             <Grid>
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition /></Grid.ColumnDefinitions>
                                 <Path x:Name="SelectionMark" Data="M 0,5 L 3,8 L 10,0" Width="10" Height="10"
@@ -245,7 +245,8 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsHighlighted" Value="True"><Setter TargetName="MenuSurface" Property="Background" Value="{DynamicResource ControlHover}" /></Trigger>
                         <Trigger Property="IsChecked" Value="True"><Setter TargetName="SelectionMark" Property="Visibility" Value="Visible" /></Trigger>
-                        <Trigger Property="IsEnabled" Value="False"><Setter TargetName="MenuSurface" Property="Opacity" Value="0.5" /></Trigger>
+                        <!-- Keep every border equally visible; unavailable actions dim only their content. -->
+                        <Trigger Property="IsEnabled" Value="False"><Setter TargetName="MenuContent" Property="Opacity" Value="0.6" /></Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

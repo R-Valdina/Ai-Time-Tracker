@@ -333,6 +333,12 @@ public sealed class PresentationTests
                 item.ApplyTemplate();
                 var itemSurface = Assert.IsType<Border>(item.Template.FindName("MenuSurface", item));
                 Assert.Null(itemSurface.Child);
+                Assert.Equal(1d, itemSurface.Opacity);
+                Assert.Equal(Palette("ControlBorder"), SolidColor(itemSurface.BorderBrush));
+                Assert.Equal(new Thickness(1), itemSurface.BorderThickness);
+                var itemContent = Assert.IsType<Border>(item.Template.FindName("MenuContent", item));
+                Assert.Equal(item.IsEnabled ? 1d : 0.6d, itemContent.Opacity);
+
                 var shadow = Assert.IsType<DropShadowEffect>(itemSurface.Effect);
                 VerifyTextOutsideEffects(item);
                 Assert.InRange(shadow.ShadowDepth, 0.5, 1);
