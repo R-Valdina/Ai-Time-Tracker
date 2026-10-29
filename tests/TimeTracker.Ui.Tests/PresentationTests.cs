@@ -62,6 +62,20 @@ public sealed class PresentationTests
                     Volatile.Write(ref phase, $"processing {theme} theme bindings");
                     DrainBindings();
                     Assert.Equal(4, application.Windows.Count);
+                    Assert.Same(((StackPanel)editor.Content).Style, ((StackPanel)adjustment.Content).Style);
+                    Assert.Equal(editor.Width, adjustment.Width);
+                    foreach (var dialog in new Window[] { editor, confirmation, adjustment })
+                    {
+                        var actions = Descendants(dialog).OfType<StackPanel>().Single(panel => panel.Style == Application.Current.FindResource("DialogActions"));
+                        foreach (var action in actions.Children.OfType<Button>())
+                        {
+                            Assert.Same(Application.Current.FindResource("RaisedButton"), action.Style);
+                            Assert.Equal("Segoe UI", action.FontFamily.Source);
+                            Assert.Equal(FontWeights.SemiBold, action.FontWeight);
+                            Assert.Equal(Palette("TextPrimary"), SolidColor(action.Foreground));
+                        }
+                    }
+
                     var background = SystemParameters.HighContrast ? SystemColors.WindowColor :
                         (Color)ColorConverter.ConvertFromString(theme == "Dark" ? "#181818" : "#F5F7FB");
                     foreach (var window in new Window[] { main, editor, confirmation, adjustment })
@@ -301,6 +315,7 @@ public sealed class PresentationTests
     /// <summary>Verifies the rounded, themed menu surface and its gutter-free full-width scroll container.</summary>
     private static void VerifyMenu(ContextMenu menu, Control owner)
     {
+        Assert.Empty(menu.Items.OfType<Separator>());
         menu.PlacementTarget = owner;
         menu.IsOpen = true;
         try

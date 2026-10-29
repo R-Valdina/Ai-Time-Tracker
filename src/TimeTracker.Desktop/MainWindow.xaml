@@ -52,14 +52,12 @@
                                     <Button.ContextMenu>
                                         <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
                                             <MenuItem Header="Edit tracker" Click="EditTracker" AutomationProperties.AutomationId="EditTracker" />
-                                            <Separator />
                                             <MenuItem Header="Copy hours and minutes" Click="CopyHours" AutomationProperties.AutomationId="CopyHours" />
                                             <MenuItem Header="Copy total minutes" Click="CopyMinutes" AutomationProperties.AutomationId="CopyMinutes" />
                                             <MenuItem Header="End entry" Click="EndTracker" IsEnabled="{Binding CanEnd}" AutomationProperties.AutomationId="EndTracker" />
                                             <MenuItem Header="{Binding ArchiveActionText}" Click="ChangeArchiveState" IsEnabled="{Binding CanChangeArchiveState}"
                                                       AutomationProperties.AutomationId="{Binding ArchiveActionId}" />
                                             <MenuItem Header="Mark midnight warning reviewed" Click="ReviewTracker" Visibility="{Binding NeedsReview, Converter={StaticResource BooleanVisibility}}" />
-                                            <Separator />
                                             <MenuItem Header="Delete" Click="DeleteTracker" Foreground="{DynamicResource DangerText}" AutomationProperties.AutomationId="DeleteTracker" />
                                         </ContextMenu>
                                     </Button.ContextMenu>
@@ -169,7 +167,6 @@
                         <MenuItem Header="Theme: Follow Windows" Tag="System" Click="ChangeTheme" AutomationProperties.AutomationId="SystemTheme" />
                         <MenuItem Header="Theme: Light" Tag="Light" Click="ChangeTheme" AutomationProperties.AutomationId="LightTheme" />
                         <MenuItem Header="Theme: Dark" Tag="Dark" Click="ChangeTheme" AutomationProperties.AutomationId="DarkTheme" />
-                        <Separator />
                         <MenuItem Header="Open data folder" Click="OpenDataFolder" />
                     </ContextMenu>
                 </Button.ContextMenu>

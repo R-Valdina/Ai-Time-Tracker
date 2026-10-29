@@ -4,10 +4,10 @@
         Style="{StaticResource AppWindow}" Icon="Assets/time-tracker.ico" Width="420"
         SizeToContent="Height" ResizeMode="NoResize" ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner" AutomationProperties.AutomationId="MessageDialog">
-    <StackPanel Margin="22">
+    <StackPanel Style="{StaticResource DialogContent}">
         <TextBlock x:Name="MessageText" TextWrapping="Wrap" />
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,22,0,0">
-            <Button x:Name="CancelButton" Content="Cancel" IsCancel="True" Margin="0,0,8,0"
+        <StackPanel Style="{StaticResource DialogActions}">
+            <Button x:Name="CancelButton" Content="Cancel" IsCancel="True" Style="{StaticResource RaisedButton}" Margin="0,0,8,0"
                     AutomationProperties.AutomationId="CancelAction" />
             <Button x:Name="ConfirmButton" Content="OK" Click="Confirm" Style="{StaticResource RaisedButton}"
                     AutomationProperties.AutomationId="ConfirmAction" />

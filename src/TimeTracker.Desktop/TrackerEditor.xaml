@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="New tracker" Style="{StaticResource AppWindow}" Width="390" SizeToContent="Height" ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False" AutomationProperties.AutomationId="TrackerEditor">
-    <StackPanel Margin="22">
+    <StackPanel Style="{StaticResource DialogContent}">
         <Label Content="Card _reference" Target="LabelInput" Foreground="{DynamicResource TextPrimary}" Padding="0,0,0,6" />
         <TextBox x:Name="LabelInput" MaxLength="120" AutomationProperties.AutomationId="TrackerLabel" AutomationProperties.Name="Card reference" />
         <Label Content="_Description (optional, 160 characters)" Target="DescriptionInput" Foreground="{DynamicResource TextPrimary}" Padding="0,0,0,6" Margin="0,16,0,0" />
@@ -20,8 +20,8 @@
             </ListBox.ItemTemplate>
         </ListBox>
         <TextBlock x:Name="ValidationMessage" Foreground="{DynamicResource WarningText}" TextWrapping="Wrap" Margin="0,12,0,0" />
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Content="Cancel" IsCancel="True" Margin="0,0,8,0" />
+        <StackPanel Style="{StaticResource DialogActions}">
+            <Button Content="Cancel" IsCancel="True" Style="{StaticResource RaisedButton}" Margin="0,0,8,0" />
             <Button x:Name="SaveTrackerButton" Content="Save tracker" IsDefault="True" Click="SaveTracker" Style="{StaticResource RaisedButton}" AutomationProperties.AutomationId="SaveTracker" />
         </StackPanel>
     </StackPanel>

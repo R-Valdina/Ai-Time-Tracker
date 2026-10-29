@@ -16,6 +16,15 @@
         <Setter Property="FontSize" Value="14" />
         <Setter Property="desktop:WindowInteraction.ReleaseFocusAfterAction" Value="True" />
     </Style>
+    <!-- Editors and confirmations share layout so new dialogs follow the same spacing. -->
+    <Style x:Key="DialogContent" TargetType="StackPanel">
+        <Setter Property="Margin" Value="22" />
+    </Style>
+    <Style x:Key="DialogActions" TargetType="StackPanel">
+        <Setter Property="Orientation" Value="Horizontal" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="Margin" Value="0,16,0,0" />
+    </Style>
     <!-- WPF shows this neutral underline for keyboard navigation only; it never changes the button border. -->
     <Style x:Key="KeyboardActionFocus" TargetType="Control">
         <Setter Property="Template">
@@ -204,17 +213,6 @@
                             <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle" />
                         </ScrollViewer>
                     </Border>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-    <Style TargetType="Separator">
-        <Setter Property="Margin" Value="5,4" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Separator">
-                    <!-- Separate menu groups with spacing rather than a divider stroke. -->
-                    <Border Height="1" />
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
