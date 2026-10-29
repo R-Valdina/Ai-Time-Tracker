@@ -88,6 +88,10 @@ public sealed class MainViewModel : ObservableObject
     public void Edit(Guid id, string label, string color, string description = "") => Change(() => engine.Edit(id, label, color, description));
     /// <summary>Toggles one timer without stopping other running cards.</summary>
     public void Toggle(Guid id) => Change(() => { if (engine.IsRunning(id)) engine.Stop(id); else engine.Start(id); });
+    /// <summary>Persists a manual duration correction and refreshes both live and finalized row totals.</summary>
+    public void AdjustTime(Guid id, TimeSpan duration, bool subtract) => Change(() => engine.AdjustTime(id, duration, subtract));
+    /// <summary>Clears and pauses a tracker without removing its reference, description, or accent.</summary>
+    public void ResetTime(Guid id) => Change(() => engine.ResetTime(id));
     /// <summary>Finalizes the current total while retaining the entry.</summary>
     public void End(Guid id) => Change(() => engine.End(id));
     /// <summary>Retains a finished entry in Earlier days rather than Today's list.</summary>

@@ -30,6 +30,7 @@ public sealed class PresentationTests
             MainWindow? main = null;
             TrackerEditor? editor = null;
             MessageDialog? confirmation = null;
+            TimeAdjustmentDialog? adjustment = null;
             try
             {
                 Volatile.Write(ref phase, "initializing WPF resources");
@@ -50,6 +51,8 @@ public sealed class PresentationTests
                 Volatile.Write(ref phase, "opening the confirmation dialog");
                 confirmation = new MessageDialog("Delete this test entry?", "Test confirmation", "Delete") { Owner = editor };
                 confirmation.Show();
+                adjustment = new TimeAdjustmentDialog("THEME-1", false, _ => { }) { Owner = main };
+                adjustment.Show();
 
                 // Round-trip themes while windows are open: existing dialogs must update, too.
                 foreach (var theme in new[] { "Dark", "Light", "Dark" })
@@ -58,10 +61,10 @@ public sealed class PresentationTests
                     SelectTheme(main, theme);
                     Volatile.Write(ref phase, $"processing {theme} theme bindings");
                     DrainBindings();
-                    Assert.Equal(3, application.Windows.Count);
+                    Assert.Equal(4, application.Windows.Count);
                     var background = SystemParameters.HighContrast ? SystemColors.WindowColor :
                         (Color)ColorConverter.ConvertFromString(theme == "Dark" ? "#181818" : "#F5F7FB");
-                    foreach (var window in new Window[] { main, editor, confirmation })
+                    foreach (var window in new Window[] { main, editor, confirmation, adjustment })
                     {
                         Assert.Equal(background, SolidColor(window.Background));
                         Assert.Equal(Palette("TextPrimary"), SolidColor(window.Foreground));
@@ -142,7 +145,7 @@ public sealed class PresentationTests
                     Volatile.Write(ref phase, $"checking unchanged {theme} focused button borders");
                     VerifyUnchangedFocusBorder(confirmation);
                     Volatile.Write(ref phase, $"checking every {theme} button and menu label");
-                    foreach (var window in new Window[] { main, editor, confirmation }) VerifySharpButtonsAndMenus(window);
+                    foreach (var window in new Window[] { main, editor, confirmation, adjustment }) VerifySharpButtonsAndMenus(window);
                 }
                 var screenshotDirectory = Environment.GetEnvironmentVariable("TIME_TRACKER_SCREENSHOT_DIRECTORY");
                 if (!string.IsNullOrWhiteSpace(screenshotDirectory))
@@ -155,6 +158,7 @@ public sealed class PresentationTests
             finally
             {
                 Volatile.Write(ref phase, "closing the presentation windows");
+                adjustment?.Close();
                 confirmation?.Close();
                 editor?.Close();
                 main?.Close();
@@ -367,7 +371,7 @@ public sealed class PresentationTests
     /// <summary>Requires rendered labels to have no effect-bearing ancestor that would rasterize their glyphs.</summary>
     private static void VerifyTextOutsideEffects(FrameworkElement control)
     {
-        var labels = Descendants(control).Where(element => element is TextBlock or AccessText).ToArray();
+        var labels = Descendants(control).Where(element => element is TextBlock or AccessText or System.Windows.Shapes.Path).ToArray();
         Assert.NotEmpty(labels);
         foreach (var label in labels)
         {
@@ -448,7 +452,7 @@ public sealed class PresentationTests
     /// <summary>Checks rendered label elements, which can override a correct Button.Foreground through implicit text styles.</summary>
     private static void VerifyLabelForeground(DependencyObject parent, string paletteKey = "ActionText")
     {
-        var text = Descendants(parent).Where(element => element is TextBlock or AccessText).ToArray();
+        var text = Descendants(parent).Where(element => element is TextBlock or AccessText or System.Windows.Shapes.Path).ToArray();
         Assert.NotEmpty(text);
         foreach (var element in text)
             Assert.Equal(Palette(paletteKey), SolidColor((Brush)element.GetValue(TextElement.ForegroundProperty)));
@@ -473,6 +477,15 @@ public sealed class PresentationTests
         VerifyTextOutsideEffects(card);
         var total = Descendants(card).OfType<TextBlock>().Single(text => AutomationProperties.GetAutomationId(text) == "FinalTotal");
         Assert.Equal(Visibility.Hidden, total.Visibility);
+        foreach (var (id, color) in new[] { ("AddTime", "AddTimeText"), ("SubtractTime", "SubtractTimeText"), ("ResetTime", "ResetTimeText") })
+        {
+            var icon = Descendants(card).OfType<Button>().Single(button => AutomationProperties.GetAutomationId(button) == id);
+            Assert.Equal(Palette(color), SolidColor(icon.Foreground));
+            Assert.Equal(new Thickness(0), icon.BorderThickness);
+            Assert.NotEmpty(AutomationProperties.GetName(icon));
+            Assert.True(icon.TranslatePoint(new Point(0, 0), card).Y >= total.TranslatePoint(new Point(0, 0), card).Y + total.ActualHeight);
+        }
+
         var rowHeight = card.ActualHeight;
         var windowHeight = window.ActualHeight;
         Assert.True(rowHeight >= 124, "Rows must reserve enough room for their final total.");

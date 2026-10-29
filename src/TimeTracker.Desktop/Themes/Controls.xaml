@@ -71,6 +71,24 @@
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
     </Style>
+    <!-- Shared vector icon template keeps all time corrections sharp, borderless, and keyboard accessible. -->
+    <Geometry x:Key="AddTimeIcon">M 12,1 A 11,11 0 1 1 11.99,1 M 6,12 L 18,12 M 12,6 L 12,18</Geometry>
+    <Geometry x:Key="SubtractTimeIcon">M 12,1 A 11,11 0 1 1 11.99,1 M 6,12 L 18,12</Geometry>
+    <Geometry x:Key="ResetTimeIcon">M 3,9 A 10,10 0 1 1 4,19 M 3,2 L 3,9 L 10,9</Geometry>
+    <Style x:Key="TimeCorrectionButton" TargetType="Button" BasedOn="{StaticResource SortDirection}">
+        <Setter Property="Width" Value="36" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="Padding" Value="6" />
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <Path Data="{Binding}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                          StrokeThickness="2.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                          Stretch="Uniform" Width="22" Height="22" />
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
     <Style x:Key="RaisedButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
         <Style.Resources>
             <Style x:Key="ButtonSurfaceStyle" TargetType="Border" BasedOn="{StaticResource RaisedSurface}" />

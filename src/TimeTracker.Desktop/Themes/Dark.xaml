@@ -15,4 +15,7 @@
     <SolidColorBrush x:Key="StopSurface" Color="#F51620" />
     <SolidColorBrush x:Key="WarningText" Color="#FCD34D" />
     <SolidColorBrush x:Key="DangerText" Color="#FCA5A5" />
+    <SolidColorBrush x:Key="AddTimeText" Color="#55D782" />
+    <SolidColorBrush x:Key="SubtractTimeText" Color="#FF6675" />
+    <SolidColorBrush x:Key="ResetTimeText" Color="#FFC247" />
 </ResourceDictionary>

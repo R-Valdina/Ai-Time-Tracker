@@ -31,6 +31,12 @@ public sealed class TrackerRowViewModel(TrackerEntry entry, bool running, bool h
     public string AccessibleToggleName => $"{ToggleAction} timer for {Label}";
     /// <summary>Distinguishes identical-looking row menus when navigating with a screen reader.</summary>
     public string AccessibleActionsName => $"Actions for {Label}";
+    /// <summary>Identifies the card when the add-time icon receives keyboard or screen-reader focus.</summary>
+    public string AccessibleAddTime => $"Add time to {Label}";
+    /// <summary>Identifies the card when the subtract-time icon receives focus.</summary>
+    public string AccessibleSubtractTime => $"Subtract time from {Label}";
+    /// <summary>Explains that reset clears the total and pauses the selected card.</summary>
+    public string AccessibleResetTime => $"Reset time to zero and pause {Label}";
     /// <summary>Indicates that this row belongs to a previous local date.</summary>
     public bool IsHistorical => historical;
     /// <summary>Indicates whether the row is actively accumulating time.</summary>
@@ -73,7 +79,7 @@ public sealed class TrackerRowViewModel(TrackerEntry entry, bool running, bool h
         entry = updated;
         running = isRunning;
         historical = isHistorical ?? historical;
-        foreach (var name in new[] { nameof(Label), nameof(Description), nameof(HasDescription), nameof(AccessibleDescription), nameof(Color), nameof(Total), nameof(TotalMinutes), nameof(AccessibleTotal), nameof(AccessibleToggleName), nameof(AccessibleActionsName), nameof(IsRunning), nameof(IsHistorical), nameof(ToggleText), nameof(CanToggle), nameof(CanEnd), nameof(CanArchive), nameof(CanUnarchive), nameof(ArchiveActionText), nameof(ArchiveActionId), nameof(CanChangeArchiveState), nameof(IsEnded), nameof(FinalTotal), nameof(NeedsReview), nameof(Status) })
+        foreach (var name in new[] { nameof(Label), nameof(Description), nameof(HasDescription), nameof(AccessibleDescription), nameof(Color), nameof(Total), nameof(TotalMinutes), nameof(AccessibleTotal), nameof(AccessibleToggleName), nameof(AccessibleActionsName), nameof(AccessibleAddTime), nameof(AccessibleSubtractTime), nameof(AccessibleResetTime), nameof(IsRunning), nameof(IsHistorical), nameof(ToggleText), nameof(CanToggle), nameof(CanEnd), nameof(CanArchive), nameof(CanUnarchive), nameof(ArchiveActionText), nameof(ArchiveActionId), nameof(CanChangeArchiveState), nameof(IsEnded), nameof(FinalTotal), nameof(NeedsReview), nameof(Status) })
             Notify(name);
     }
 }

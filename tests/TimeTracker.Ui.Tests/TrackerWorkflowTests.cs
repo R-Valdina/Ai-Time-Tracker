@@ -251,8 +251,8 @@ public sealed class TrackerWorkflowTests : IDisposable
         Keyboard.Type(VirtualKeyShort.TAB);
         WaitUntil(() => notes[0].Properties.HasKeyboardFocus.Value, "Tab skipped the populated tracker description.");
         Keyboard.Type(VirtualKeyShort.TAB);
-        var actions = window!.FindAllDescendants(condition => condition.ByAutomationId("TrackerActions"));
-        WaitUntil(() => actions[1].Properties.HasKeyboardFocus.Value, "Tab did not leave the description for the next tracker.");
+        var addTime = Find("TodayTrackers").FindFirstDescendant(condition => condition.ByAutomationId("AddTime"))!;
+        WaitUntil(() => addTime.Properties.HasKeyboardFocus.Value, "Tab did not reach the time adjustment after the description.");
         Keyboard.TypeSimultaneously(VirtualKeyShort.SHIFT, VirtualKeyShort.TAB);
         WaitUntil(() => notes[0].Properties.HasKeyboardFocus.Value, "Shift+Tab skipped the populated description.");
         ToggleButtons()[1].Focus();
@@ -358,6 +358,72 @@ public sealed class TrackerWorkflowTests : IDisposable
         WaitUntil(() => JsonSerializer.Deserialize<UserPreferences>(File.ReadAllText(preferencesPath))?.SortOrder == TrackerSortOrder.Ascending,
             "Keyboard activation did not save ascending order.");
         Assert.True(sort.Properties.HasKeyboardFocus.Value);
+    }
+
+    /// <summary>Exercises themed time corrections, validation, Enter/OK/Cancel, reset, and persisted totals.</summary>
+    [Theory]
+    [InlineData("Light")]
+    [InlineData("Dark")]
+    public void ManualTimeCorrectionsAndResetWork(string theme)
+    {
+        Launch();
+        Find("Settings").AsButton().Invoke();
+        Find($"{theme}Theme").AsMenuItem().Invoke();
+        CreateTracker("CORRECT-1", "Retain this description");
+        Assert.Equal("Add time to CORRECT-1", Find("AddTime").Name);
+        Find("AddTime").AsButton().Invoke();
+        var input = Find("AdjustmentDuration").AsTextBox();
+        WaitUntil(() => input.Properties.HasKeyboardFocus.Value, "The duration editor was not initially focused.");
+        input.Text = "1:60";
+        Keyboard.Type(VirtualKeyShort.ENTER);
+        WaitUntil(() => Find("AdjustmentValidation").Name.Length > 0, "Invalid input was not explained.");
+        Assert.Equal(TimeSpan.Zero, ReadDocument().Entries[0].Elapsed);
+        input.Text = "1:30";
+        Keyboard.Type(VirtualKeyShort.ENTER);
+        WaitUntil(() => ReadDocument().Entries[0].Elapsed == TimeSpan.FromMinutes(90), "Enter did not add hours and minutes.");
+        Find("SubtractTime").AsButton().Invoke();
+        Find("AdjustmentDuration").AsTextBox().Text = "15";
+        Find("SaveAdjustment").AsButton().Invoke();
+        WaitUntil(() => ReadDocument().Entries[0].Elapsed == TimeSpan.FromMinutes(75), "OK did not subtract total minutes.");
+        Find("AddTime").AsButton().Invoke();
+        Find("AdjustmentDuration").AsTextBox().Text = "50";
+        Keyboard.Type(VirtualKeyShort.ESCAPE);
+        WaitUntil(() => window!.ModalWindows.Length == 0, "Escape did not cancel the correction.");
+        Assert.Equal(TimeSpan.FromMinutes(75), ReadDocument().Entries[0].Elapsed);
+        Restart();
+        Assert.Equal("01:15:00", Find("ElapsedTime").AsLabel().Text);
+        OpenRowMenu("EndTracker");
+        Find("AddTime").AsButton().Invoke();
+        Find("AdjustmentDuration").AsTextBox().Text = "5";
+        Find("SaveAdjustment").AsButton().Invoke();
+        WaitUntil(() => Find("FinalTotal").Name.Contains("1 h 20 min"), "The ended summary did not reflect the correction.");
+        Find("ResetTime").AsButton().Invoke();
+        WaitUntil(() => ReadDocument().Entries[0].Elapsed == TimeSpan.Zero && !ReadDocument().Entries[0].IsEnded,
+            "Reset did not clear and reopen the ended tracker.");
+        Assert.Equal("Start timer for CORRECT-1", ToggleButtons()[0].Name);
+        ToggleButtons()[0].Invoke();
+        WaitUntil(() => Find("ElapsedTime").AsLabel().Text != "00:00:00", "The reset tracker could not be restarted.");
+        Find("ResetTime").AsButton().Invoke();
+        WaitUntil(() => ToggleButtons()[0].Name == "Start timer for CORRECT-1", "Reset did not pause the running timer.");
+        Restart();
+        Assert.Equal(TimeSpan.Zero, ReadDocument().Entries[0].Elapsed);
+        Assert.Equal("Retain this description", ReadDocument().Entries[0].Description);
+        Find("SubtractTime").AsButton().Invoke();
+        Find("AdjustmentDuration").AsTextBox().Text = "60";
+        Find("SaveAdjustment").AsButton().Invoke();
+        WaitUntil(() => window!.ModalWindows.Length == 0, "Subtracting beyond zero did not complete.");
+        Assert.Equal(TimeSpan.Zero, ReadDocument().Entries[0].Elapsed);
+        OpenRowMenu("EndTracker");
+        OpenRowMenu("ArchiveTracker");
+        var history = Find("EarlierTrackers");
+        history.FindFirstDescendant(condition => condition.ByAutomationId("AddTime"))!.AsButton().Invoke();
+        Find("AdjustmentDuration").AsTextBox().Text = "30";
+        Find("SaveAdjustment").AsButton().Invoke();
+        WaitUntil(() => ReadDocument().Entries[0].Elapsed == TimeSpan.FromMinutes(30), "The archived correction was not saved.");
+        history.FindFirstDescendant(condition => condition.ByAutomationId("ResetTime"))!.AsButton().Invoke();
+        WaitUntil(() => ReadDocument().Entries[0].Elapsed == TimeSpan.Zero, "The archived reset was not saved.");
+        Assert.True(ReadDocument().Entries[0].IsArchived);
+        Assert.True(ReadDocument().Entries[0].IsEnded);
     }
 
     /// <summary>Launches a real executable; missing prerequisites fail instead of producing a zero-test success.</summary>

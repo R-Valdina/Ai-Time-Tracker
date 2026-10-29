@@ -84,6 +84,30 @@ public sealed class TrackerEngine
         entries[index] = entries[index] with { IsEnded = true };
     }
 
+    /// <summary>Applies a positive manual correction after checkpointing live time; subtraction stops at zero.</summary>
+    public void AdjustTime(Guid id, TimeSpan duration, bool subtract)
+    {
+        if (duration <= TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(duration));
+        Advance();
+        var index = FindIndex(id);
+        var elapsed = entries[index].Elapsed;
+        var corrected = subtract ? (duration >= elapsed ? TimeSpan.Zero : elapsed - duration) : elapsed + duration;
+        entries[index] = entries[index] with { Elapsed = corrected };
+    }
+
+    /// <summary>Clears a total and pauses its timer; today's visible ended entry becomes ready to start again.</summary>
+    public void ResetTime(Guid id)
+    {
+        Stop(id);
+        var index = FindIndex(id);
+        var entry = entries[index];
+        entries[index] = entry with
+        {
+            Elapsed = TimeSpan.Zero,
+            IsEnded = entry.Date == Today && !entry.IsArchived ? false : entry.IsEnded
+        };
+    }
+
     /// <summary>Moves a finalized entry out of Today without changing its date or recorded total.</summary>
     public void Archive(Guid id)
     {

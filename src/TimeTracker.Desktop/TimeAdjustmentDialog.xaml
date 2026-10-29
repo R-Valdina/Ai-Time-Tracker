@@ -1,0 +1,20 @@
+<Window x:Class="TimeTracker.Desktop.TimeAdjustmentDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource AppWindow}" Width="370" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False" AutomationProperties.AutomationId="TimeAdjustmentDialog">
+    <StackPanel Margin="22">
+        <TextBlock x:Name="CardHeading" FontWeight="SemiBold" TextWrapping="Wrap" />
+        <Label Content="_Time (hours:minutes or total minutes)" Target="DurationInput" Padding="0,16,0,6" Foreground="{DynamicResource TextPrimary}" />
+        <TextBox x:Name="DurationInput" MaxLength="20" AutomationProperties.AutomationId="AdjustmentDuration"
+                 AutomationProperties.Name="Time in hours colon minutes or total minutes" />
+        <TextBlock Text="Examples: 1:30 or 90 = 1 hour 30 minutes." FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,8,0,0" TextWrapping="Wrap" />
+        <TextBlock x:Name="SubtractHint" Text="Subtraction stops at zero." FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,4,0,0" />
+        <TextBlock x:Name="ValidationMessage" Foreground="{DynamicResource WarningText}" TextWrapping="Wrap" Margin="0,12,0,0"
+                   AutomationProperties.AutomationId="AdjustmentValidation" AutomationProperties.LiveSetting="Assertive" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="Cancel" IsCancel="True" Margin="0,0,8,0" AutomationProperties.AutomationId="CancelAdjustment" />
+            <Button Content="OK" IsDefault="True" Click="SaveAdjustment" Style="{StaticResource RaisedButton}" AutomationProperties.AutomationId="SaveAdjustment" />
+        </StackPanel>
+    </StackPanel>
+</Window>
