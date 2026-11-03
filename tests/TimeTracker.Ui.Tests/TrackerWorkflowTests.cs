@@ -426,6 +426,108 @@ public sealed class TrackerWorkflowTests : IDisposable
         Assert.True(ReadDocument().Entries[0].IsEnded);
     }
 
+    /// <summary>Checks the combined action, live filed indicator, neutral history, filtering, and focus preservation.</summary>
+    [Fact]
+    public void EndAndArchiveAndLiveFilingExposeTheRightHistory()
+    {
+        Launch();
+        CreateTracker("UNFILED");
+        ToggleButtons()[0].Invoke();
+        WaitUntil(() => !Find("ElapsedTime").Name.EndsWith("00:00:00", StringComparison.Ordinal), "The timer never advanced.");
+        OpenRowMenu("EndAndArchiveTracker");
+        WaitUntil(() => ReadDocument().Entries[0].IsArchived, "The combined action was not saved.");
+        var unfiled = Assert.Single(ReadDocument().Entries);
+        Assert.True(unfiled.IsEnded && unfiled.IsArchived);
+        Assert.True(unfiled.Elapsed > TimeSpan.Zero);
+        Assert.Equal("Not filed", Find("FilingIndicator").Name);
+        CreateTracker("FILED");
+        WaitUntil(() => ReadDocument().Entries.Any(entry => entry.Label == "FILED"), "The filing test card was not saved.");
+        var id = ReadDocument().Entries.Single(entry => entry.Label == "FILED").Id;
+        Find("NewTracker").AsButton().Invoke();
+        var draft = Find("TrackerLabel").AsTextBox();
+        draft.Text = "Keep my focus";
+        WaitUntil(() => draft.Properties.HasKeyboardFocus.Value, "The draft did not receive focus.");
+        var timestamp = new DateTimeOffset(2026, 11, 3, 12, 30, 0, TimeSpan.Zero);
+        var command = WriteInbox("live-complete", new { Command = "complete", RowId = id, TimecardId = "TC-LIVE-42", PostedAt = timestamp });
+        WaitUntil(() => !File.Exists(command), "The inbox command was not acknowledged.");
+        Assert.True(draft.Properties.HasKeyboardFocus.Value);
+        Assert.Single(window!.ModalWindows);
+        Keyboard.Type(VirtualKeyShort.ESCAPE);
+        WaitUntil(() => window!.ModalWindows.Length == 0, "The existing editor did not close.");
+        Assert.True(ReadDocument().Entries.Single(entry => entry.Id == id).IsFiled);
+        var history = Find("EarlierTrackers");
+        WaitUntil(() => history.FindAllDescendants(condition => condition.ByAutomationId("FilingIndicator"))
+            .Any(element => element.Name.Contains("TC-LIVE-42", StringComparison.Ordinal) && element.Name.Contains("2026-11-03", StringComparison.Ordinal)),
+            "The filed indicator did not expose posting details.");
+        Find("UnfiledArchiveFilter").Patterns.Toggle.Pattern.Toggle();
+        WaitUntil(() => RowReferences("EarlierTrackers").SequenceEqual(new[] { "UNFILED" }), "Unfiled archive filtering was incorrect.");
+        Assert.Equal(2, ReadDocument().Entries.Count);
+        Find("UnfiledArchiveFilter").Patterns.Toggle.Pattern.Toggle();
+        WaitUntil(() => RowReferences("EarlierTrackers").Length == 2, "Clearing the filter did not restore history.");
+        Restart();
+        Assert.Equal("TC-LIVE-42", ReadDocument().Entries.Single(entry => entry.Id == id).TimecardId);
+        Assert.Equal(2, ReadDocument().Version);
+    }
+
+    /// <summary>Processes queued startup commands, partial writes, duplicate completions, and rejected commands silently.</summary>
+    [Fact]
+    public void InboxStartupRetriesOrderRejectionsAndRestartAreSafe()
+    {
+        var id = Guid.NewGuid();
+        var entry = new TrackerEntry(id, "LEGACY", TrackerColors.All[0], DateOnly.FromDateTime(DateTime.Now), TimeSpan.FromMinutes(12));
+        new JsonFileStore<TrackerDocument>(Path.Combine(dataDirectory, "tracker-data.json")).Save(new(1, [entry]));
+        var startup = WriteInbox("startup-end", new { Command = "end", RowId = id });
+        Launch();
+        WaitUntil(() => !File.Exists(startup), "The startup command was not processed.");
+        Assert.Equal(2, ReadDocument().Version);
+        Assert.True(ReadDocument().Entries[0].IsEnded);
+        var inbox = Path.Combine(dataDirectory, "inbox");
+        var pending = Path.Combine(inbox, "partial.json");
+        using (var stream = new FileStream(pending, FileMode.Create, FileAccess.Write, FileShare.None))
+        {
+            var bytes = System.Text.Encoding.UTF8.GetBytes("{\"Command\":\"complete\",");
+            stream.Write(bytes);
+            stream.Flush(true);
+            // A later end must stay behind the locked completion, not bypass the queue head.
+            var later = WriteInbox("later-end", new { Command = "end", RowId = id });
+            Assert.True(File.Exists(later));
+        }
+        var postedAt = new DateTimeOffset(2026, 11, 3, 13, 0, 0, TimeSpan.Zero);
+        File.WriteAllText(pending, JsonSerializer.Serialize(new { Command = "complete", RowId = id, TimecardId = "TC-STARTUP", PostedAt = postedAt }));
+        WaitUntil(() => !File.Exists(pending), "A completed partial file was not retried.");
+        WaitUntil(() => !File.Exists(Path.Combine(inbox, "later-end.json")), "The next queued command was not processed.");
+        var filed = ReadDocument().Entries[0];
+        Assert.True(filed.IsEnded && filed.IsArchived);
+        Assert.Equal(TimeSpan.FromMinutes(12), filed.Elapsed);
+        var repeated = WriteInbox("same-id", new { Command = "complete", RowId = id, TimecardId = "TC-STARTUP", PostedAt = postedAt.AddHours(1) });
+        WaitUntil(() => !File.Exists(repeated), "The duplicate completion was not acknowledged.");
+        Assert.Equal(filed, ReadDocument().Entries[0]);
+        WriteInbox("conflict", new { Command = "complete", RowId = id, TimecardId = "WRONG", PostedAt = postedAt });
+        WriteInbox("unknown-row", new { Command = "end", RowId = Guid.NewGuid() });
+        WriteInbox("unknown-command", new { Command = "other", RowId = id });
+        File.WriteAllText(Path.Combine(inbox, "malformed.json"), "{broken");
+        var rejected = Path.Combine(inbox, "rejected");
+        WaitUntil(() => Directory.Exists(rejected) && Directory.GetFiles(rejected, "*.json").Length == 4, "Invalid commands were not quarantined.");
+        Assert.Equal(4, Directory.GetFiles(rejected, "*.txt").Length);
+        Assert.All(Directory.GetFiles(rejected, "*.txt"), path => Assert.NotEmpty(File.ReadAllText(path)));
+        Assert.Contains("Rejected", File.ReadAllText(Path.Combine(dataDirectory, "time-tracker.log")));
+        Assert.Empty(window!.ModalWindows);
+        Assert.Equal(filed, ReadDocument().Entries[0]);
+        Restart();
+        Assert.Equal(filed, ReadDocument().Entries[0]);
+    }
+
+    /// <summary>Writes one complete command through rename so the app sees only a fully written envelope.</summary>
+    private string WriteInbox(string name, object command)
+    {
+        var inbox = Path.Combine(dataDirectory, "inbox");
+        Directory.CreateDirectory(inbox);
+        var path = Path.Combine(inbox, name + ".json");
+        File.WriteAllText(path + ".tmp", JsonSerializer.Serialize(command));
+        File.Move(path + ".tmp", path);
+        return path;
+    }
+
     /// <summary>Launches a real executable; missing prerequisites fail instead of producing a zero-test success.</summary>
     private void Launch()
     {

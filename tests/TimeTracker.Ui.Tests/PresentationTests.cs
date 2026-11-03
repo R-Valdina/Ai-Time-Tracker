@@ -296,6 +296,24 @@ public sealed class PresentationTests
         Assert.Equal("", row.AccessibleDescription);
     }
 
+    /// <summary>Posting fields refresh their neutral archived state and accessible details after a live command.</summary>
+    [Fact]
+    public void FiledIndicatorRefreshesMetadataAndPreservesFreeTextLabels()
+    {
+        var entry = new TrackerEntry(Guid.NewGuid(), "free / text label", TrackerColors.All[0], DateOnly.FromDateTime(DateTime.Now), TimeSpan.Zero, IsArchived: true, IsEnded: true);
+        var row = new TrackerRowViewModel(entry, false, true);
+        Assert.Equal("Not filed", row.FilingIndicator);
+        Assert.Equal("Not filed", row.FilingDetails);
+        var notifications = new List<string?>();
+        row.PropertyChanged += (_, args) => notifications.Add(args.PropertyName);
+        row.Refresh(entry with { TimecardId = "TC-42", PostedAt = DateTimeOffset.Parse("2026-11-03T12:30:00Z") }, false);
+        Assert.Equal("✓", row.FilingIndicator);
+        Assert.Contains("TC-42", row.FilingDetails);
+        Assert.Contains("2026-11-03", row.FilingDetails);
+        Assert.Contains(nameof(row.FilingIndicator), notifications);
+        Assert.Contains(nameof(row.FilingDetails), notifications);
+    }
+
     /// <summary>Checks that finalizing an entry notifies bindings and supplies both timecard formats.</summary>
     [Fact]
     public void EndingEntryRefreshesVisibleFinalTotal()

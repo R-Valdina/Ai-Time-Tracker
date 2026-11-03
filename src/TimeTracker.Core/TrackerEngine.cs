@@ -108,6 +108,34 @@ public sealed class TrackerEngine
         };
     }
 
+    /// <summary>Freezes and archives one entry without requiring a filed timecard.</summary>
+    public void EndAndArchive(Guid id)
+    {
+        End(id);
+        Archive(id);
+    }
+
+    /// <summary>Applies a validated, repeat-safe inbox command; conflicts are rejected before changing timer state.</summary>
+    public void ApplyCommand(InboxCommand command)
+    {
+        command.Validate();
+        var index = FindIndex(command.RowId);
+        var entry = entries[index];
+        if (command.Command == "end")
+        {
+            if (!entry.IsEnded) End(entry.Id);
+            return;
+        }
+        if (entry.IsFiled)
+        {
+            if (entry.TimecardId == command.TimecardId) return;
+            throw new InvalidOperationException("The entry is already filed with a different TimecardId.");
+        }
+        EndAndArchive(entry.Id);
+        index = FindIndex(entry.Id);
+        entries[index] = entries[index] with { TimecardId = command.TimecardId, PostedAt = command.PostedAt };
+    }
+
     /// <summary>Moves a finalized entry out of Today without changing its date or recorded total.</summary>
     public void Archive(Guid id)
     {
@@ -171,14 +199,14 @@ public sealed class TrackerEngine
     public TrackerDocument Snapshot()
     {
         Advance();
-        return new TrackerDocument(1, Entries);
+        return new TrackerDocument(2, Entries);
     }
 
     /// <summary>Rejects unsupported or malformed files before they can replace good saved data.</summary>
     public static void Validate(TrackerDocument document)
     {
         ArgumentNullException.ThrowIfNull(document);
-        if (document.Version != 1 || document.Entries is null)
+        if (document.Version is not (1 or 2) || document.Entries is null)
             throw new InvalidDataException("Unsupported tracker file format.");
         var identifiers = new HashSet<Guid>();
         foreach (var entry in document.Entries)

@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace TimeTracker.Core;
 
 /// <summary>A single day's card tracker. Running state is deliberately transient.</summary>
@@ -10,13 +12,20 @@ public sealed record TrackerEntry(
     bool IsEnded = false,
     bool NeedsReview = false,
     bool IsArchived = false,
-    string Description = "");
+    string Description = "",
+    string? TimecardId = null,
+    DateTimeOffset? PostedAt = null)
+{
+    /// <summary>Indicates that an external timecard system has accepted this entry.</summary>
+    [JsonIgnore]
+    public bool IsFiled => !string.IsNullOrWhiteSpace(TimecardId);
+}
 
 /// <summary>Versioned on-disk data. No running session can resume accidentally after a crash.</summary>
 public sealed record TrackerDocument(int Version, IReadOnlyList<TrackerEntry> Entries)
 {
     /// <summary>Creates an empty document using the supported file format.</summary>
-    public static TrackerDocument Empty => new(1, []);
+    public static TrackerDocument Empty => new(2, []);
 }
 
 /// <summary>Persistent appearance, card ordering, and normal (non-maximized) window geometry.</summary>

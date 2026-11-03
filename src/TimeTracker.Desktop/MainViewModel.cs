@@ -13,6 +13,7 @@ public sealed class MainViewModel : ObservableObject
     private DateOnly displayedDate;
     private string message = "";
     private bool hasSaveError;
+    private bool showOnlyUnfiledArchived;
 
     /// <summary>Loads recoverable local state. Unreadable data stops startup rather than silently resetting totals.</summary>
     public MainViewModel(string dataDirectory)
@@ -30,12 +31,26 @@ public sealed class MainViewModel : ObservableObject
         message = loaded.Warning ?? preferences.Warning ?? "";
         displayedDate = engine.Today;
         RebuildRows();
+        // Preserve the version 1 primary as the backup while atomically upgrading the primary.
+        if (loaded.Value.Version == 1) trackerStore.Save(engine.Snapshot());
     }
 
     /// <summary>Gets today's rows, retained until explicitly deleted.</summary>
     public ObservableCollection<TrackerRowViewModel> TodayRows { get; } = [];
     /// <summary>Gets previous daily rows and explicitly archived entries, newest dates first.</summary>
     public ObservableCollection<TrackerRowViewModel> EarlierRows { get; } = [];
+    /// <summary>Filters history to explicitly archived entries awaiting filing; no data is removed.</summary>
+    public bool ShowOnlyUnfiledArchived
+    {
+        get => showOnlyUnfiledArchived;
+        set
+        {
+            if (showOnlyUnfiledArchived == value) return;
+            showOnlyUnfiledArchived = value;
+            RebuildRows();
+            Notify();
+        }
+    }
     /// <summary>Gets the local folder exposed through Settings.</summary>
     public string DataDirectory { get; }
     /// <summary>Gets the saved appearance and window geometry.</summary>
@@ -49,7 +64,7 @@ public sealed class MainViewModel : ObservableObject
     /// <summary>Indicates whether the initial empty-state hint should be visible.</summary>
     public bool IsEmpty => TodayRows.Count == 0;
     /// <summary>Gets the previous-entry section heading, including review warnings.</summary>
-    public string HistoryHeading => $"Earlier days · {EarlierRows.Count} saved" + (EarlierRows.Any(row => row.NeedsReview) ? " · review needed" : "");
+    public string HistoryHeading => $"Earlier days · {EarlierRows.Count} {(ShowOnlyUnfiledArchived ? "shown" : "saved")}" + (EarlierRows.Any(row => row.NeedsReview) ? " · review needed" : "");
     /// <summary>Indicates whether any historical entry needs midnight review.</summary>
     public bool HasReviewWarnings => EarlierRows.Any(row => row.NeedsReview);
 
@@ -96,6 +111,15 @@ public sealed class MainViewModel : ObservableObject
     public void End(Guid id) => Change(() => engine.End(id));
     /// <summary>Retains a finished entry in Earlier days rather than Today's list.</summary>
     public void Archive(Guid id) => Change(() => engine.Archive(id));
+    /// <summary>Ends and archives an entry with one persisted change and no filing requirement.</summary>
+    public void EndAndArchive(Guid id) => Change(() => engine.EndAndArchive(id));
+    /// <summary>Applies and saves a command on the UI thread; failures propagate so the inbox keeps the file.</summary>
+    public void ApplyInboxCommand(InboxCommand command)
+    {
+        engine.ApplyCommand(command);
+        trackerStore.Save(engine.Snapshot());
+        RebuildRows();
+    }
     /// <summary>Returns a retained card to today's list while preserving historical totals and any current session.</summary>
     public void Unarchive(Guid id) => Change(() => engine.Unarchive(id));
     /// <summary>Deletes only the requested row after UI confirmation.</summary>
@@ -187,7 +211,8 @@ public sealed class MainViewModel : ObservableObject
     private void SynchronizeRows(ObservableCollection<TrackerRowViewModel> rows, bool historical)
     {
         var desired = TrackerOrdering.Order(
-            engine.Entries.Where(entry => (entry.Date != engine.Today || entry.IsArchived) == historical),
+            engine.Entries.Where(entry => (entry.Date != engine.Today || entry.IsArchived) == historical &&
+                (!historical || !ShowOnlyUnfiledArchived || entry.IsArchived && !entry.IsFiled)),
             Preferences.SortOrder).ToArray();
         var identifiers = desired.Select(entry => entry.Id).ToHashSet();
         foreach (var row in rows.Where(row => !identifiers.Contains(row.Id)).ToArray()) rows.Remove(row);

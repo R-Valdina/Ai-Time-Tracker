@@ -19,6 +19,12 @@ public sealed class TrackerRowViewModel(TrackerEntry entry, bool running, bool h
     public bool HasDescription => !string.IsNullOrWhiteSpace(Description);
     /// <summary>Identifies the card and exposes the complete note when its description receives keyboard focus.</summary>
     public string AccessibleDescription => HasDescription ? $"Description for {Label}: {Description}" : "";
+    /// <summary>Displays a check for filed entries and neutral text for unfiled archived entries.</summary>
+    public string FilingIndicator => entry.IsFiled ? "✓" : entry.IsArchived ? "Not filed" : "";
+    /// <summary>Names the filing state and includes the external identifier and posting timestamp.</summary>
+    public string FilingDetails => entry.IsFiled
+        ? $"Filed · TimecardId: {entry.TimecardId} · PostedAt: {entry.PostedAt?.ToString("O") ?? "not recorded"}"
+        : entry.IsArchived ? "Not filed" : "";
     /// <summary>Gets the selected left-border accent.</summary>
     public string Color => entry.Color;
     /// <summary>Gets the live duration in hours, minutes, and seconds.</summary>
@@ -79,7 +85,7 @@ public sealed class TrackerRowViewModel(TrackerEntry entry, bool running, bool h
         entry = updated;
         running = isRunning;
         historical = isHistorical ?? historical;
-        foreach (var name in new[] { nameof(Label), nameof(Description), nameof(HasDescription), nameof(AccessibleDescription), nameof(Color), nameof(Total), nameof(TotalMinutes), nameof(AccessibleTotal), nameof(AccessibleToggleName), nameof(AccessibleActionsName), nameof(AccessibleAddTime), nameof(AccessibleSubtractTime), nameof(AccessibleResetTime), nameof(IsRunning), nameof(IsHistorical), nameof(ToggleText), nameof(CanToggle), nameof(CanEnd), nameof(CanArchive), nameof(CanUnarchive), nameof(ArchiveActionText), nameof(ArchiveActionId), nameof(CanChangeArchiveState), nameof(IsEnded), nameof(FinalTotal), nameof(NeedsReview), nameof(Status) })
+        foreach (var name in new[] { nameof(Label), nameof(Description), nameof(HasDescription), nameof(AccessibleDescription), nameof(Color), nameof(Total), nameof(TotalMinutes), nameof(AccessibleTotal), nameof(AccessibleToggleName), nameof(AccessibleActionsName), nameof(AccessibleAddTime), nameof(AccessibleSubtractTime), nameof(AccessibleResetTime), nameof(IsRunning), nameof(IsHistorical), nameof(ToggleText), nameof(CanToggle), nameof(CanEnd), nameof(CanArchive), nameof(CanUnarchive), nameof(ArchiveActionText), nameof(ArchiveActionId), nameof(CanChangeArchiveState), nameof(IsEnded), nameof(FinalTotal), nameof(NeedsReview), nameof(Status), nameof(FilingIndicator), nameof(FilingDetails) })
             Notify(name);
     }
 }

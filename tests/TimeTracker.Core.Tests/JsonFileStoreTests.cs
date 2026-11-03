@@ -103,6 +103,36 @@ public sealed class JsonFileStoreTests : IDisposable
         Assert.Equal(TrackerSortOrder.Ascending, preferences.SortOrder);
     }
 
+    /// <summary>External readers see complete snapshots while the single writer atomically replaces the primary.</summary>
+    [Fact]
+    public async Task ConcurrentReaderNeverSeesPartialJsonAndBackupRemainsPreviousSnapshot()
+    {
+        var store = Store();
+        store.Save(Document(0));
+        using var finished = new CancellationTokenSource();
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var reader = Task.Run(() =>
+        {
+            do
+            {
+                using var stream = new FileStream(store.FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                var document = System.Text.Json.JsonSerializer.Deserialize<TrackerDocument>(stream)!;
+                TrackerEngine.Validate(document);
+                Assert.Single(document.Entries);
+                started.TrySetResult();
+            } while (!finished.IsCancellationRequested);
+        });
+        try
+        {
+            await started.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            for (var minutes = 1; minutes <= 40; minutes++) store.Save(Document(minutes));
+        }
+        finally { finished.Cancel(); await reader; }
+        Assert.Equal(TimeSpan.FromMinutes(40), store.Load(() => TrackerDocument.Empty).Value.Entries[0].Elapsed);
+        Assert.Contains("00:39:00", File.ReadAllText(store.BackupPath));
+        Assert.False(File.Exists(store.FilePath + ".tmp"));
+    }
+
     /// <summary>Removes only the directory created by this test instance.</summary>
     public void Dispose()
     {

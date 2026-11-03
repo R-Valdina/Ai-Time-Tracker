@@ -16,6 +16,7 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel model;
     private readonly DispatcherTimer timer;
+    private readonly InboxWatcher inbox;
     private int ticksSinceSave;
     private bool automaticResize;
     private bool ready;
@@ -30,6 +31,7 @@ public partial class MainWindow : Window
         ThemeManager.InitializeWindow(this);
         DataContext = model;
         RestorePlacement();
+        inbox = new InboxWatcher(dataDirectory, Dispatcher, model.ApplyInboxCommand);
         timer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Normal, Tick, Dispatcher);
         SystemEvents.SessionSwitch += SessionChanged;
         SystemEvents.PowerModeChanged += PowerChanged;
@@ -94,6 +96,13 @@ public partial class MainWindow : Window
     private void ResetTrackerTime(object sender, RoutedEventArgs e) => model.ResetTime(Row(sender).Id);
     /// <summary>Finalizes the selected entry without deleting its total.</summary>
     private void EndTracker(object sender, RoutedEventArgs e) => model.End(Row(sender).Id);
+    /// <summary>Ends and archives the selected row in one save, keeping filing optional.</summary>
+    private void EndAndArchiveTracker(object sender, RoutedEventArgs e)
+    {
+        model.EndAndArchive(Row(sender).Id);
+        HistorySection.IsExpanded = true;
+        AdjustHeight();
+    }
     /// <summary>Archives a finished row, or restores a historical card for today without discarding saved time.</summary>
     private void ChangeArchiveState(object sender, RoutedEventArgs e)
     {
@@ -245,6 +254,7 @@ public partial class MainWindow : Window
     /// <summary>Releases static event subscriptions so no disposed window receives Windows callbacks.</summary>
     private void WindowClosed(object? sender, EventArgs e)
     {
+        inbox.Dispose();
         timer.Stop();
         SystemEvents.SessionSwitch -= SessionChanged;
         SystemEvents.PowerModeChanged -= PowerChanged;

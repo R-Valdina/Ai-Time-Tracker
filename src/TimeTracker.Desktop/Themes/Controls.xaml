@@ -127,6 +127,28 @@
             </Trigger>
         </Style.Triggers>
     </Style>
+    <!-- History filtering uses the same neutral keyboard focus and theme colors as other actions. -->
+    <Style TargetType="CheckBox" BasedOn="{StaticResource ActionTypography}">
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource KeyboardActionFocus}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                        <Border Width="18" Height="18" BorderThickness="1" CornerRadius="3" BorderBrush="{DynamicResource ControlBorder}"
+                                Background="{DynamicResource RowSurface}" VerticalAlignment="Center" Margin="0,0,8,0">
+                            <Path x:Name="Check" Data="M 1,6 L 5,10 L 12,1" Stroke="{DynamicResource TextPrimary}" StrokeThickness="2"
+                                  Margin="2" Visibility="Hidden" />
+                        </Border>
+                        <ContentPresenter VerticalAlignment="Center" RecognizesAccessKey="True" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True"><Setter TargetName="Check" Property="Visibility" Value="Visible" /></Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
     <Style TargetType="TextBox">
         <Setter Property="Background" Value="{DynamicResource RowSurface}" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />

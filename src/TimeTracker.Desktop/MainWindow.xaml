@@ -40,6 +40,9 @@
                                 <TextBlock Text="{Binding Label}" FontSize="17" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding Label}"
                                            AutomationProperties.AutomationId="TrackerReference" />
                                 <TextBlock Text="{Binding Status}" Margin="0,5,0,0" FontSize="12" Foreground="{DynamicResource TextSecondary}" />
+                                <TextBlock Text="{Binding FilingIndicator}" FontSize="11" Foreground="{DynamicResource TextSecondary}"
+                                           ToolTip="{Binding FilingDetails}" AutomationProperties.Name="{Binding FilingDetails}"
+                                           AutomationProperties.AutomationId="FilingIndicator" />
                             </StackPanel>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding Total}" FontSize="23" FontWeight="SemiBold"
@@ -54,6 +57,7 @@
                                             <MenuItem Header="Edit tracker" Click="EditTracker" AutomationProperties.AutomationId="EditTracker" />
                                             <MenuItem Header="Copy hours and minutes" Click="CopyHours" AutomationProperties.AutomationId="CopyHours" />
                                             <MenuItem Header="Copy total minutes" Click="CopyMinutes" AutomationProperties.AutomationId="CopyMinutes" />
+                                            <MenuItem Header="End and archive" Click="EndAndArchiveTracker" AutomationProperties.AutomationId="EndAndArchiveTracker" />
                                             <MenuItem Header="End entry" Click="EndTracker" IsEnabled="{Binding CanEnd}" AutomationProperties.AutomationId="EndTracker" />
                                             <MenuItem Header="{Binding ArchiveActionText}" Click="ChangeArchiveState" IsEnabled="{Binding CanChangeArchiveState}"
                                                       AutomationProperties.AutomationId="{Binding ArchiveActionId}" />
@@ -154,7 +158,11 @@
                 <ItemsControl ItemsSource="{Binding TodayRows}" ItemTemplate="{StaticResource TrackerRow}" AutomationProperties.AutomationId="TodayTrackers" AutomationProperties.Name="Today’s trackers" />
                 <Expander x:Name="HistorySection" AutomationProperties.AutomationId="HistorySection" Header="{Binding HistoryHeading}" Margin="0,4,0,0"
                           Foreground="{DynamicResource TextPrimary}" Expanded="HistoryExpanded" Collapsed="HistoryExpanded">
-                    <ItemsControl ItemsSource="{Binding EarlierRows}" ItemTemplate="{StaticResource TrackerRow}" Margin="0,12,0,0" AutomationProperties.AutomationId="EarlierTrackers" AutomationProperties.Name="Earlier days trackers" />
+                    <StackPanel>
+                        <CheckBox Content="Only archived, not filed" IsChecked="{Binding ShowOnlyUnfiledArchived}" Margin="0,10,0,0"
+                                  Foreground="{DynamicResource TextPrimary}" AutomationProperties.AutomationId="UnfiledArchiveFilter" />
+                        <ItemsControl ItemsSource="{Binding EarlierRows}" ItemTemplate="{StaticResource TrackerRow}" Margin="0,12,0,0" AutomationProperties.AutomationId="EarlierTrackers" AutomationProperties.Name="Earlier days trackers" />
+                    </StackPanel>
                 </Expander>
             </StackPanel>
         </ScrollViewer>

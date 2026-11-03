@@ -24,6 +24,16 @@ Prefer to run without installing? Download the release's **`TimeTracker-0.1.2-wi
 
 The download also includes **README.txt**, **INSTALL.txt**, and **SHA256SUMS.txt**. The same written guides are installed beside the app. See the [full installation, update, and removal guide](docs/installation.md) for details.
 
+## Local skill integration
+
+External tools can read your tracker data and submit local JSON commands through `%LOCALAPPDATA%\TimeTracker\inbox`. The app remains the only data writer. `end` freezes a row; `complete` ends, stamps its external TimecardId/PostedAt, and archives it in one atomic save. Repeats with the same ID are safe; conflicting IDs are rejected without overwriting a posting.
+
+The row menu also offers **End and archive**. Filed entries show a check mark with posting details; unfiled archived entries show neutral **Not filed** text. Earlier days includes an **Only archived, not filed** filter. Filing is optional and archiving needs no forced warning.
+
+Version 1 data migrates to version 2 without changing existing entries, with null posting fields and the old primary retained as the backup. Commands already in the inbox run at startup. Successful commands are deleted only after saving; rejected commands and short reason files go to `inbox\rejected`, with details in `time-tracker.log`. No integration command opens a popup or steals focus.
+
+See [command examples, migration, and safe file publishing](docs/skill-integration.md). Never edit the app's data file while it is running.
+
 ## Screenshots
 
 These are captures of the actual WPF application using disposable example data, in light and dark mode.

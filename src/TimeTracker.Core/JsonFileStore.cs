@@ -73,7 +73,8 @@ public sealed class JsonFileStore<T>(string path, Action<T>? validate = null)
     /// <summary>Reads and validates a complete document before returning it.</summary>
     private T Read(string filePath)
     {
-        using var stream = File.OpenRead(filePath);
+        // Permit atomic replacement while another process holds a read-only snapshot.
+        using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
         var value = JsonSerializer.Deserialize<T>(stream, Options) ?? throw new InvalidDataException("Empty JSON document.");
         validate?.Invoke(value);
         return value;

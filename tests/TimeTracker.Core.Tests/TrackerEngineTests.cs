@@ -261,6 +261,6 @@ public sealed class TrackerEngineTests
         var entry = new TrackerEntry(Guid.NewGuid(), "A", TrackerColors.All[0], new DateOnly(2026, 10, 20), TimeSpan.Zero);
         Assert.Throws<InvalidDataException>(() => new TrackerEngine(new TrackerDocument(1, [entry, entry])));
         Assert.Throws<InvalidDataException>(() => new TrackerEngine(new TrackerDocument(1, [entry with { Elapsed = TimeSpan.FromSeconds(-1) }])));
-        Assert.Throws<InvalidDataException>(() => new TrackerEngine(new TrackerDocument(2, [])));
+        Assert.Throws<InvalidDataException>(() => new TrackerEngine(new TrackerDocument(3, [])));
     }
 }
