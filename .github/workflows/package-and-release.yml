@@ -102,6 +102,9 @@ jobs:
           No cloning, Visual Studio, Git, separate .NET installation, account, or internet connection is needed to use the installed app.
 
           Windows 11, 64-bit Intel/AMD. A portable ZIP, README, installation guide, and SHA-256 checksums are included below.
+          Includes local AI-skill inbox commands, filed status/filtering, and End and archive. The integration guide is installed in docs/skill-integration.md.
+          Before upgrading, close the app and back up %LOCALAPPDATA%\TimeTracker. Version 1 data migrates to version 2; older app binaries cannot read version 2.
+
           This installer is unsigned; Windows may show a publisher or reputation prompt.
 
           Verified on a Windows runner: source tests, installer and shortcuts, UI automation against the installed app, and uninstall preserving user data. Real lock/sleep, Narrator speech, and a clean physical PC remain manual release checks.

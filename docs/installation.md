@@ -5,7 +5,7 @@ Time Tracker is an offline Windows desktop app. The downloadable release include
 ## Install the Windows download
 
 1. Go to https://github.com/R-Valdina/Ai-Time-Tracker/releases/latest.
-2. Under **Assets**, download `TimeTracker-Setup-0.1.2-win-x64.exe`. This release targets Windows 11 on 64-bit Intel/AMD PCs.
+2. Under **Assets**, download `TimeTracker-Setup-0.1.3-win-x64.exe`. This release targets Windows 11 on 64-bit Intel/AMD PCs.
 3. Close Time Tracker if an older copy is running.
 4. Double-click the downloaded installer and follow its wizard. Administrator access is not required.
 5. Keep the default location, or choose a dedicated application folder. The default is `%LOCALAPPDATA%\Programs\TimeTracker`.
@@ -18,7 +18,7 @@ The release page provides `README.txt` and `INSTALL.txt` to read before installa
 
 ## Portable use
 
-1. Download `TimeTracker-0.1.2-win-x64.zip` from the same release.
+1. Download `TimeTracker-0.1.3-win-x64.zip` from the same release.
 2. Extract the **entire** ZIP into a folder. Do not run from inside the compressed folder.
 3. Open `TimeTracker.exe`. Keep all extracted app/runtime files together.
 4. Optionally create a Windows shortcut to that executable.
@@ -38,6 +38,8 @@ In the app, select **Settings → Open data folder**, or paste `%LOCALAPPDATA%\T
 3. Run it and use your existing application folder.
 4. Open Time Tracker and confirm your retained entries and totals.
 
+Version 0.1.3 adds local AI-skill inbox integration. On first launch, version 1 tracker data upgrades to version 2 while preserving existing entries and adding nullable posting fields. Back up the data folder with the app closed before upgrading; older binaries that only support version 1 cannot read version 2. See the [integration guide](skill-integration.md) for command examples and migration details.
+
 The installer replaces application files and refreshes shortcuts; it leaves your separate tracker-data folder untouched. Portable users should extract a new release into a fresh folder and update their shortcut.
 
 ## Uninstall
@@ -54,7 +56,7 @@ For portable or script-installed copies, close the app and delete its applicatio
 From PowerShell in the Downloads folder, replace the filename if the version differs:
 
 ```powershell
-Get-FileHash .\TimeTracker-Setup-0.1.2-win-x64.exe -Algorithm SHA256
+Get-FileHash .\TimeTracker-Setup-0.1.3-win-x64.exe -Algorithm SHA256
 ```
 
 Compare the result with the same filename in `SHA256SUMS.txt` on the release page. Matching hashes check file integrity, not publisher identity or a digital signature.
@@ -80,6 +82,6 @@ The setup compiler uses the shared version in `Directory.Build.props`. Runtime n
 
 The **Package and release** workflow runs source tests, captures actual light/dark WPF screenshots into `docs/images`, builds the package, silently installs it on an isolated Windows runner, checks shortcuts/runtime/guides, runs UI tests against the installed executable, and verifies uninstall retains sample user data. Never run `Test-Installer.ps1` on a personal installation; it expects a disposable build runner.
 
-A tag named `v` plus the project version (for example `v0.1.2`) publishes the tested installer, portable ZIP, guides, and hashes to GitHub Releases. Branch builds retain the same files as CI artifacts and update repository screenshots after verification. Publishing requires the workflow's repository write permission.
+A tag named `v` plus the project version (for example `v0.1.3`) publishes the tested installer, portable ZIP, guides, and hashes to GitHub Releases. Branch builds retain the same files as CI artifacts and update repository screenshots after verification. Publishing requires the workflow's repository write permission.
 
 Complete the manual checks in `docs/testing.md` for Windows lock/sleep, actual Narrator speech, scaling, and a clean physical PC. Hosted automation does not establish those outcomes or simulate a machine without an installed SDK. The package's included runtime and execution against installed files are verified separately.

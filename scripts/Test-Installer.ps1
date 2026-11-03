@@ -23,7 +23,7 @@ if ($Action -eq 'Install') {
     'Retain user data across installation and removal.' | Set-Content $marker
     $process = Start-Process -FilePath $InstallerPath -ArgumentList '/S' -PassThru -Wait
     if ($process.ExitCode -ne 0) { throw "Setup failed with exit code $($process.ExitCode)." }
-    foreach ($file in @('TimeTracker.exe', 'README.txt', 'INSTALL.txt', 'Uninstall.exe', 'coreclr.dll', 'hostfxr.dll', 'docs/images/time-tracker-light.png', 'docs/images/time-tracker-dark.png')) {
+    foreach ($file in @('TimeTracker.exe', 'README.txt', 'INSTALL.txt', 'Uninstall.exe', 'coreclr.dll', 'hostfxr.dll', 'docs/images/time-tracker-light.png', 'docs/images/time-tracker-dark.png', 'docs/skill-integration.md')) {
         if (-not (Test-Path (Join-Path $installationDirectory $file))) { throw "Missing installed file: $file" }
     }
     $configuration = Get-Content (Join-Path $installationDirectory 'TimeTracker.runtimeconfig.json') -Raw | ConvertFrom-Json
