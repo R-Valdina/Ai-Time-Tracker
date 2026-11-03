@@ -52,21 +52,33 @@ public sealed class JsonFileStore<T>(string path, Action<T>? validate = null)
                 JsonSerializer.Serialize(stream, value, Options);
                 stream.Flush(flushToDisk: true);
             }
-            if (File.Exists(path))
-            {
-                // A corrupt primary must not overwrite the good backup during recovery.
-                File.Replace(temporaryPath, path, recoveredFromBackup ? null : BackupPath);
-            }
-            else
-            {
-                File.Move(temporaryPath, path);
-                if (!File.Exists(BackupPath)) File.Copy(path, BackupPath);
-            }
+            // Keep backup maintenance separate: Windows ReplaceFile can briefly remove the primary name
+            // while renaming it to the backup. Same-folder overwrite-rename keeps the primary available.
+            if (File.Exists(path) && !recoveredFromBackup) SaveBackup();
+            File.Move(temporaryPath, path, overwrite: true);
+            if (!File.Exists(BackupPath)) SaveBackup();
             recoveredFromBackup = false;
         }
         finally
         {
             if (File.Exists(temporaryPath)) File.Delete(temporaryPath);
+        }
+    }
+
+    /// <summary>Flushes a complete backup snapshot before atomically replacing the backup's filename.</summary>
+    private void SaveBackup()
+    {
+        var temporaryBackup = BackupPath + ".tmp";
+        try
+        {
+            File.Copy(path, temporaryBackup, overwrite: true);
+            using (var stream = new FileStream(temporaryBackup, FileMode.Open, FileAccess.Write, FileShare.None))
+                stream.Flush(flushToDisk: true);
+            File.Move(temporaryBackup, BackupPath, overwrite: true);
+        }
+        finally
+        {
+            if (File.Exists(temporaryBackup)) File.Delete(temporaryBackup);
         }
     }
 
