@@ -97,7 +97,7 @@ A successfully applied command is saved immediately and only then deleted. If sa
 
 For acknowledgment, wait for deletion and verify the row in the saved data, or inspect the rejected folder and reason. Do not resubmit a conflicting ID; correct the external request first.
 
-The store flushes a complete same-folder temporary snapshot, then atomically replaces the primary while maintaining the backup. Readers should close files promptly and, when supported, open with `FileShare.ReadWrite | FileShare.Delete` so Windows permits replacement during a read. A reader sees the complete old or new snapshot, never partially written JSON.
+The store flushes a complete same-folder temporary snapshot, then atomically replaces the primary while maintaining the backup. Readers should close files promptly and, when supported, open with `FileShare.ReadWrite | FileShare.Delete` so Windows permits replacement during a read. An opened reader sees the complete old or new snapshot, never partially written JSON. Windows can briefly reject opening the primary during replacement (missing-path, access, or sharing errors); retry opening with a short delay and a bounded timeout, such as two seconds. Do not treat a transient open failure as an empty tracker, and never read the temporary file. JSON parse failures are not valid snapshots.
 
 ## UI behavior
 

@@ -52,8 +52,8 @@ public sealed class JsonFileStore<T>(string path, Action<T>? validate = null)
                 JsonSerializer.Serialize(stream, value, Options);
                 stream.Flush(flushToDisk: true);
             }
-            // Keep backup maintenance separate: Windows ReplaceFile can briefly remove the primary name
-            // while renaming it to the backup. Same-folder overwrite-rename keeps the primary available.
+            // Preserve the previous complete snapshot separately, without rotating a corrupt primary
+            // over a recovered backup. The primary is always replaced from a fully flushed file.
             if (File.Exists(path) && !recoveredFromBackup) SaveBackup();
             RenameAtomically(temporaryPath, path);
             if (!File.Exists(BackupPath)) SaveBackup();
@@ -89,8 +89,8 @@ public sealed class JsonFileStore<T>(string path, Action<T>? validate = null)
         {
             try
             {
-                // ReplaceFile without a backup supports Windows readers sharing deletion. Backup creation
-                // is deliberately separate so the primary is not first renamed to a backup filename.
+                // Readers must share deletion and retry transient open failures on Windows.
+                // Already-open snapshots remain complete throughout replacement.
                 if (File.Exists(destination)) File.Replace(source, destination, null);
                 else File.Move(source, destination);
                 return;

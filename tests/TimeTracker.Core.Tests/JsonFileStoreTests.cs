@@ -113,13 +113,28 @@ public sealed class JsonFileStoreTests : IDisposable
         var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var reader = Task.Run(() =>
         {
+            var sinceLastRead = System.Diagnostics.Stopwatch.StartNew();
             do
             {
-                using var stream = new FileStream(store.FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-                var document = System.Text.Json.JsonSerializer.Deserialize<TrackerDocument>(stream)!;
-                TrackerEngine.Validate(document);
-                Assert.Single(document.Entries);
-                started.TrySetResult();
+                FileStream stream;
+                try { stream = new FileStream(store.FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete); }
+                catch (Exception exception) when (exception is FileNotFoundException or UnauthorizedAccessException ||
+                    exception is IOException && (exception.HResult & 0xFFFF) == 32)
+                {
+                    // Win32 replacement can briefly deny opening a path. Only opening is retried:
+                    // malformed JSON or an incomplete snapshot must still fail immediately.
+                    Assert.True(sinceLastRead.Elapsed < TimeSpan.FromSeconds(2), "The primary remained unavailable.");
+                    Thread.Sleep(1);
+                    continue;
+                }
+                using (stream)
+                {
+                    var document = System.Text.Json.JsonSerializer.Deserialize<TrackerDocument>(stream)!;
+                    TrackerEngine.Validate(document);
+                    Assert.Single(document.Entries);
+                    started.TrySetResult();
+                    sinceLastRead.Restart();
+                }
             } while (!finished.IsCancellationRequested);
         });
         try

@@ -92,7 +92,7 @@ Manual time corrections have deterministic coverage for whole-minute and hours:m
 
 ## Skill integration regressions
 
-Core tests cover nullable TimecardId/PostedAt, unchanged version 1 entries migrating to a version 2 snapshot with the original backup, free-text labels, parsing/validation, end and complete commands, repeated commands, conflicting IDs, unknown rows, and malformed JSON. A concurrent reader test continuously parses the primary while the store atomically replaces it and verifies that the backup is the previous complete snapshot.
+Core tests cover nullable TimecardId/PostedAt, unchanged version 1 entries migrating to a version 2 snapshot with the original backup, free-text labels, parsing/validation, end and complete commands, repeated commands, conflicting IDs, unknown rows, and malformed JSON. A concurrent reader test parses the primary while the store replaces it and verifies that the backup is the previous complete snapshot. It retries only transient Windows open failures for at most two seconds; incomplete or malformed JSON fails immediately.
 
 Windows FlaUI workflows exercise **End and archive**, the neutral **Not filed** state, live filed indicators and posting details, the archived/unfiled filter, unchanged focus in an existing editor, startup commands, incomplete files, duplicate completions, rejected commands/reasons/logs, and restart persistence. Dispatcher tests hold a producer file open, simulate failed saves, and assert FIFO callbacks on the UI thread. A Windows sharing test blocks primary replacement to verify that retrying an already-applied completion still durably saves it before acknowledgment. Presentation tests check filing notifications and themed, neutral filter controls.
 
