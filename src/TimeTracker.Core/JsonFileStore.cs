@@ -55,7 +55,7 @@ public sealed class JsonFileStore<T>(string path, Action<T>? validate = null)
             // Keep backup maintenance separate: Windows ReplaceFile can briefly remove the primary name
             // while renaming it to the backup. Same-folder overwrite-rename keeps the primary available.
             if (File.Exists(path) && !recoveredFromBackup) SaveBackup();
-            File.Move(temporaryPath, path, overwrite: true);
+            RenameAtomically(temporaryPath, path);
             if (!File.Exists(BackupPath)) SaveBackup();
             recoveredFromBackup = false;
         }
@@ -74,11 +74,26 @@ public sealed class JsonFileStore<T>(string path, Action<T>? validate = null)
             File.Copy(path, temporaryBackup, overwrite: true);
             using (var stream = new FileStream(temporaryBackup, FileMode.Open, FileAccess.Write, FileShare.None))
                 stream.Flush(flushToDisk: true);
-            File.Move(temporaryBackup, BackupPath, overwrite: true);
+            RenameAtomically(temporaryBackup, BackupPath);
         }
         finally
         {
             if (File.Exists(temporaryBackup)) File.Delete(temporaryBackup);
+        }
+    }
+
+    /// <summary>Retries brief reader/antivirus sharing conflicts without ever truncating the destination.</summary>
+    private static void RenameAtomically(string source, string destination)
+    {
+        for (var attempt = 0; ; attempt++)
+        {
+            try { File.Move(source, destination, overwrite: true); return; }
+            catch (Exception exception) when (attempt < 9 && exception is IOException or UnauthorizedAccessException)
+            {
+                // Windows may retain a replaced file's old read handle briefly even with delete sharing.
+                // Bound the wait to 90 ms; a persistent failure must reach the caller and retain its command.
+                Thread.Sleep(10);
+            }
         }
     }
 

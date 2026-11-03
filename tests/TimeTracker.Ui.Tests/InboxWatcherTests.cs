@@ -98,7 +98,8 @@ public sealed class InboxWatcherTests
             var command = new InboxCommand("complete", id, "TC-SAVE", DateTimeOffset.UtcNow);
             using (var externalReader = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                Assert.ThrowsAny<IOException>(() => model.ApplyInboxCommand(command));
+                var exception = Record.Exception(() => model.ApplyInboxCommand(command));
+                Assert.True(exception is IOException or UnauthorizedAccessException);
                 Assert.Equal(before, File.ReadAllText(path));
                 Assert.Equal("", model.Message);
             }
