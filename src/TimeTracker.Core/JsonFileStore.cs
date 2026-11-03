@@ -87,7 +87,14 @@ public sealed class JsonFileStore<T>(string path, Action<T>? validate = null)
     {
         for (var attempt = 0; ; attempt++)
         {
-            try { File.Move(source, destination, overwrite: true); return; }
+            try
+            {
+                // ReplaceFile without a backup supports Windows readers sharing deletion. Backup creation
+                // is deliberately separate so the primary is not first renamed to a backup filename.
+                if (File.Exists(destination)) File.Replace(source, destination, null);
+                else File.Move(source, destination);
+                return;
+            }
             catch (Exception exception) when (attempt < 9 && exception is IOException or UnauthorizedAccessException)
             {
                 // Windows may retain a replaced file's old read handle briefly even with delete sharing.
