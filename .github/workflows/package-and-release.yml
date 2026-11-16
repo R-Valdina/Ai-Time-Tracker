@@ -2,7 +2,7 @@ name: Package and release
 
 on:
   push:
-    branches: [feature/time-tracker, main]
+    branches: [feature/time-tracker, main, 'release/**']
     tags: ['v*']
     paths:
       - 'README.md'
@@ -102,7 +102,7 @@ jobs:
           No cloning, Visual Studio, Git, separate .NET installation, account, or internet connection is needed to use the installed app.
 
           Windows 11, 64-bit Intel/AMD. A portable ZIP, README, installation guide, and SHA-256 checksums are included below.
-          Includes local AI-skill inbox commands, filed status/filtering, and End and archive. The integration guide is installed in docs/skill-integration.md.
+          Includes comma-separated bulk tracker creation and optional editable work types of up to 20 characters, plus local AI-skill inbox commands, filed status/filtering, and End and archive. The integration guide is installed in docs/skill-integration.md.
           Before upgrading, close the app and back up %LOCALAPPDATA%\TimeTracker. Version 1 data migrates to version 2; older app binaries cannot read version 2.
 
           This installer is unsigned; Windows may show a publisher or reputation prompt.
