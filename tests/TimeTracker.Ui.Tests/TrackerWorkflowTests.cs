@@ -23,6 +23,32 @@ public sealed class TrackerWorkflowTests : IDisposable
     private Window? window;
 
     [Fact]
+    public void BulkCreationAndTypeEditingPersistAfterRestart()
+    {
+        Launch();
+        Find("NewTracker").AsButton().Invoke();
+        Find("TrackerLabel").AsTextBox().Text = "25-02472, 25-03342, 26-10863";
+        Find("TrackerType").AsTextBox().Text = "Testing";
+        Find("TrackerDescription").AsTextBox().Text = "Shared note";
+        Find("SaveTracker").AsButton().Invoke();
+        WaitUntil(() => ToggleButtons().Length == 3, "Batch did not create three trackers.");
+        Assert.All(ReadDocument().Entries, entry =>
+        {
+            Assert.Equal("Testing", entry.Type);
+            Assert.Equal("Shared note", entry.Description);
+        });
+        OpenRowMenu("EditTracker");
+        Assert.Equal("Testing", Find("TrackerType").AsTextBox().Text);
+        Find("TrackerType").AsTextBox().Text = "Test Plan";
+        Find("SaveTracker").AsButton().Invoke();
+        WaitUntil(() => ReadDocument().Entries.Any(entry => entry.Type == "Test Plan"), "Type edit was not saved.");
+        Restart();
+        Assert.Equal(3, ToggleButtons().Length);
+        Assert.Contains(ReadDocument().Entries, entry => entry.Type == "Test Plan");
+        Assert.Equal("Test Plan", Find("TrackerTypeText").AsLabel().Text);
+    }
+
+    [Fact]
     public void CreateStartStopEndAndReopenPreservesTotal()
     {
         Launch();

@@ -15,6 +15,8 @@ public sealed class TrackerRowViewModel(TrackerEntry entry, bool running, bool h
     public string Label => entry.Label;
     /// <summary>Gets the optional short note displayed along the bottom of the tracker.</summary>
     public string Description => entry.Description;
+    /// <summary>Gets the optional work type displayed on active and historical rows.</summary>
+    public string Type => entry.Type;
     /// <summary>Includes only populated descriptions in keyboard navigation.</summary>
     public bool HasDescription => !string.IsNullOrWhiteSpace(Description);
     /// <summary>Identifies the card and exposes the complete note when its description receives keyboard focus.</summary>
@@ -85,7 +87,7 @@ public sealed class TrackerRowViewModel(TrackerEntry entry, bool running, bool h
         entry = updated;
         running = isRunning;
         historical = isHistorical ?? historical;
-        foreach (var name in new[] { nameof(Label), nameof(Description), nameof(HasDescription), nameof(AccessibleDescription), nameof(Color), nameof(Total), nameof(TotalMinutes), nameof(AccessibleTotal), nameof(AccessibleToggleName), nameof(AccessibleActionsName), nameof(AccessibleAddTime), nameof(AccessibleSubtractTime), nameof(AccessibleResetTime), nameof(IsRunning), nameof(IsHistorical), nameof(ToggleText), nameof(CanToggle), nameof(CanEnd), nameof(CanArchive), nameof(CanUnarchive), nameof(ArchiveActionText), nameof(ArchiveActionId), nameof(CanChangeArchiveState), nameof(IsEnded), nameof(FinalTotal), nameof(NeedsReview), nameof(Status), nameof(FilingIndicator), nameof(FilingDetails) })
+        foreach (var name in new[] { nameof(Label), nameof(Type), nameof(Description), nameof(HasDescription), nameof(AccessibleDescription), nameof(Color), nameof(Total), nameof(TotalMinutes), nameof(AccessibleTotal), nameof(AccessibleToggleName), nameof(AccessibleActionsName), nameof(AccessibleAddTime), nameof(AccessibleSubtractTime), nameof(AccessibleResetTime), nameof(IsRunning), nameof(IsHistorical), nameof(ToggleText), nameof(CanToggle), nameof(CanEnd), nameof(CanArchive), nameof(CanUnarchive), nameof(ArchiveActionText), nameof(ArchiveActionId), nameof(CanChangeArchiveState), nameof(IsEnded), nameof(FinalTotal), nameof(NeedsReview), nameof(Status), nameof(FilingIndicator), nameof(FilingDetails) })
             Notify(name);
     }
 }

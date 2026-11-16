@@ -27,22 +27,43 @@ public sealed class TrackerEngine
     public bool IsRunning(Guid id) => runningSince.ContainsKey(id);
 
     /// <summary>Adds a paused entry for today; the label is a card reference, not a required integration.</summary>
-    public Guid Add(string label, string color, string description = "")
+    public Guid Add(string label, string color, string description = "", string type = "")
     {
         ValidateLabelAndColor(label, color);
         ValidateDescription(description);
-        var entry = new TrackerEntry(Guid.NewGuid(), label.Trim(), color, Today, TimeSpan.Zero, Description: description.Trim());
+        ValidateType(type);
+        var entry = new TrackerEntry(Guid.NewGuid(), label.Trim(), color, Today, TimeSpan.Zero, Description: description.Trim(), Type: type.Trim());
         entries.Add(entry);
         return entry.Id;
     }
 
-    /// <summary>Changes the reference, accent, and optional description while preserving recorded time.</summary>
-    public void Edit(Guid id, string label, string color, string description = "")
+    /// <summary>Creates one paused tracker per comma-separated reference, validating the entire batch before adding any.</summary>
+    public IReadOnlyList<Guid> AddMany(string references, string color, string description = "", string type = "")
+    {
+        var labels = ParseReferences(references);
+        foreach (var label in labels) ValidateLabelAndColor(label, color);
+        ValidateDescription(description);
+        ValidateType(type);
+        return labels.Select(label => Add(label, color, description, type)).ToArray();
+    }
+
+    /// <summary>Trims references and rejects empty items so mistakes cannot silently drop trackers.</summary>
+    public static IReadOnlyList<string> ParseReferences(string references)
+    {
+        ArgumentNullException.ThrowIfNull(references);
+        var labels = references.Split(',').Select(label => label.Trim()).ToArray();
+        foreach (var label in labels) ValidateLabelAndColor(label, TrackerColors.All[0]);
+        return labels;
+    }
+
+    /// <summary>Changes the reference, accent, description, and type while preserving recorded time.</summary>
+    public void Edit(Guid id, string label, string color, string description = "", string type = "")
     {
         ValidateLabelAndColor(label, color);
         ValidateDescription(description);
+        ValidateType(type);
         var index = FindIndex(id);
-        entries[index] = entries[index] with { Label = label.Trim(), Color = color, Description = description.Trim() };
+        entries[index] = entries[index] with { Label = label.Trim(), Color = color, Description = description.Trim(), Type = type.Trim() };
     }
 
     /// <summary>Starts a paused entry. Older days create a fresh daily entry, preserving history.</summary>
@@ -213,21 +234,28 @@ public sealed class TrackerEngine
         {
             if (entry is null || entry.Id == Guid.Empty || !identifiers.Add(entry.Id) || entry.Elapsed < TimeSpan.Zero || entry.Date == DateOnly.MaxValue)
                 throw new InvalidDataException("The tracker file contains an invalid entry.");
-            try { ValidateLabelAndColor(entry.Label, entry.Color); ValidateDescription(entry.Description); }
-            catch (ArgumentException exception) { throw new InvalidDataException("The tracker file contains an invalid label, color, or description.", exception); }
+            try { ValidateLabelAndColor(entry.Label, entry.Color); ValidateDescription(entry.Description); ValidateType(entry.Type); }
+            catch (ArgumentException exception) { throw new InvalidDataException("The tracker file contains an invalid label, color, description, or type.", exception); }
         }
     }
 
     /// <summary>Shares the new-day restore rule between Start today and Unarchive, retaining any current work.</summary>
     private Guid GetOrAddTodayEntry(TrackerEntry source) =>
-        entries.LastOrDefault(candidate => candidate.Date == Today && candidate.Label == source.Label &&
-            !candidate.IsEnded && !candidate.IsArchived)?.Id ?? Add(source.Label, source.Color, source.Description);
+        entries.LastOrDefault(candidate => candidate.Date == Today && candidate.Label == source.Label && candidate.Type == source.Type &&
+            !candidate.IsEnded && !candidate.IsArchived)?.Id ?? Add(source.Label, source.Color, source.Description, source.Type);
 
     /// <summary>Finds a tracker or fails explicitly rather than editing the wrong row.</summary>
     private int FindIndex(Guid id)
     {
         var index = entries.FindIndex(entry => entry.Id == id);
         return index >= 0 ? index : throw new KeyNotFoundException("Tracker no longer exists.");
+    }
+
+    /// <summary>Bounds the optional work type to one short line.</summary>
+    private static void ValidateType(string type)
+    {
+        if (type is null || type.Length > 20 || type.Contains('\r') || type.Contains('\n'))
+            throw new ArgumentException("Use a type of up to 20 characters on one line.", nameof(type));
     }
 
     /// <summary>Bounds optional notes for compact rows and rejects malformed saved descriptions.</summary>

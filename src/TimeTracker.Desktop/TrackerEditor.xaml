@@ -5,7 +5,10 @@
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False" AutomationProperties.AutomationId="TrackerEditor">
     <StackPanel Style="{StaticResource DialogContent}">
         <Label Content="Card _reference" Target="LabelInput" Foreground="{DynamicResource TextPrimary}" Padding="0,0,0,6" />
-        <TextBox x:Name="LabelInput" MaxLength="120" AutomationProperties.AutomationId="TrackerLabel" AutomationProperties.Name="Card reference" />
+        <TextBox x:Name="LabelInput" MaxLength="0" AutomationProperties.AutomationId="TrackerLabel" AutomationProperties.Name="Card reference" />
+        <TextBlock x:Name="BulkHint" Text="For several trackers, separate references with commas." TextWrapping="Wrap" Margin="0,6,0,0" />
+        <Label Content="_Type (optional, 20 characters)" Target="TypeInput" Foreground="{DynamicResource TextPrimary}" Padding="0,0,0,6" Margin="0,16,0,0" />
+        <TextBox x:Name="TypeInput" MaxLength="20" AutomationProperties.AutomationId="TrackerType" AutomationProperties.Name="Type, optional, up to 20 characters" />
         <Label Content="_Description (optional, 160 characters)" Target="DescriptionInput" Foreground="{DynamicResource TextPrimary}" Padding="0,0,0,6" Margin="0,16,0,0" />
         <TextBox x:Name="DescriptionInput" MaxLength="160" AutomationProperties.AutomationId="TrackerDescription" AutomationProperties.Name="Description, optional, up to 160 characters" />
         <TextBlock Text="Row border color" Margin="0,16,0,8" />
