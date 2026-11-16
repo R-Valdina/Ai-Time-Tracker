@@ -14,7 +14,8 @@ public sealed record TrackerEntry(
     bool IsArchived = false,
     string Description = "",
     string? TimecardId = null,
-    DateTimeOffset? PostedAt = null)
+    DateTimeOffset? PostedAt = null,
+    string Type = "")
 {
     /// <summary>Indicates that an external timecard system has accepted this entry.</summary>
     [JsonIgnore]

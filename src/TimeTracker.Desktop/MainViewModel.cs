@@ -98,9 +98,9 @@ public sealed class MainViewModel : ObservableObject
     }
 
     /// <summary>Adds a new paused card using the editor's validated inputs.</summary>
-    public void Add(string label, string color, string description = "") => Change(() => engine.Add(label, color, description));
+    public void Add(string label, string color, string description = "", string type = "") => Change(() => engine.AddMany(label, color, description, type));
     /// <summary>Updates a row's descriptive fields without changing its time.</summary>
-    public void Edit(Guid id, string label, string color, string description = "") => Change(() => engine.Edit(id, label, color, description));
+    public void Edit(Guid id, string label, string color, string description = "", string type = "") => Change(() => engine.Edit(id, label, color, description, type));
     /// <summary>Toggles one timer without stopping other running cards.</summary>
     public void Toggle(Guid id) => Change(() => { if (engine.IsRunning(id)) engine.Stop(id); else engine.Start(id); });
     /// <summary>Persists a manual duration correction and refreshes both live and finalized row totals.</summary>

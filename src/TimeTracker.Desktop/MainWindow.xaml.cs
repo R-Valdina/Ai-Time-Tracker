@@ -62,7 +62,7 @@ public partial class MainWindow : Window
     private void NewTracker(object sender, RoutedEventArgs e)
     {
         var editor = new TrackerEditor { Owner = this };
-        if (editor.ShowDialog() == true) { model.Add(editor.TrackerLabel, editor.TrackerColor, editor.TrackerDescription); AdjustHeight(); }
+        if (editor.ShowDialog() == true) { model.Add(editor.TrackerLabel, editor.TrackerColor, editor.TrackerDescription, editor.TrackerType); AdjustHeight(); }
     }
 
     /// <summary>Opens a context menu with mouse or keyboard using the same action button.</summary>
@@ -77,8 +77,8 @@ public partial class MainWindow : Window
     private void EditTracker(object sender, RoutedEventArgs e)
     {
         var row = Row(sender);
-        var editor = new TrackerEditor(row.Label, row.Color, row.Description) { Owner = this };
-        if (editor.ShowDialog() == true) model.Edit(row.Id, editor.TrackerLabel, editor.TrackerColor, editor.TrackerDescription);
+        var editor = new TrackerEditor(row.Label, row.Color, row.Description, row.Type) { Owner = this };
+        if (editor.ShowDialog() == true) model.Edit(row.Id, editor.TrackerLabel, editor.TrackerColor, editor.TrackerDescription, editor.TrackerType);
     }
 
     /// <summary>Starts or pauses one row while allowing deliberate overlapping timers.</summary>

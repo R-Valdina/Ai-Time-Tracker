@@ -39,6 +39,7 @@
                             <StackPanel VerticalAlignment="Center" Margin="0,0,8,0">
                                 <TextBlock Text="{Binding Label}" FontSize="17" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding Label}"
                                            AutomationProperties.AutomationId="TrackerReference" />
+                                <TextBlock Text="{Binding Type}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Type}" AutomationProperties.AutomationId="TrackerTypeText" />
                                 <TextBlock Text="{Binding Status}" Margin="0,5,0,0" FontSize="12" Foreground="{DynamicResource TextSecondary}" />
                                 <TextBlock Text="{Binding FilingIndicator}" FontSize="11" Foreground="{DynamicResource TextSecondary}"
                                            ToolTip="{Binding FilingDetails}" AutomationProperties.Name="{Binding FilingDetails}"

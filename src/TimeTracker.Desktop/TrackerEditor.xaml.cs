@@ -6,8 +6,10 @@ namespace TimeTracker.Desktop;
 /// <summary>Shared create/edit dialog with a required card reference, accent color, and optional short description.</summary>
 public partial class TrackerEditor : Window
 {
+    private readonly bool isCreating;
+
     /// <summary>Initializes a new or existing tracker without modifying the tracker until Save.</summary>
-    public TrackerEditor(string label = "", string? color = null, string description = "")
+    public TrackerEditor(string label = "", string? color = null, string description = "", string type = "")
     {
         InitializeComponent();
         ThemeManager.InitializeWindow(this);
@@ -16,6 +18,10 @@ public partial class TrackerEditor : Window
         ColorInput.SelectedIndex = Math.Max(0, TrackerColors.All.ToList().IndexOf(color ?? TrackerColors.All[0]));
         LabelInput.Text = label;
         DescriptionInput.Text = description;
+        TypeInput.Text = type;
+        isCreating = label.Length == 0;
+        BulkHint.Visibility = isCreating ? Visibility.Visible : Visibility.Collapsed;
+        LabelInput.MaxLength = isCreating ? 0 : 120;
         Title = label.Length == 0 ? "New tracker" : "Edit tracker";
         Loaded += (_, _) => { LabelInput.Focus(); LabelInput.SelectAll(); };
     }
@@ -24,6 +30,8 @@ public partial class TrackerEditor : Window
     public string TrackerLabel => LabelInput.Text.Trim();
     /// <summary>Gets the optional trimmed note after successful confirmation.</summary>
     public string TrackerDescription => DescriptionInput.Text.Trim();
+    /// <summary>Gets the optional work type.</summary>
+    public string TrackerType => TypeInput.Text.Trim();
     /// <summary>Gets the explicitly selected accent after successful confirmation.</summary>
     public string TrackerColor => ((ColorChoice)ColorInput.SelectedItem).Color;
 
@@ -33,6 +41,16 @@ public partial class TrackerEditor : Window
         if (string.IsNullOrWhiteSpace(TrackerLabel) || ColorInput.SelectedItem is null)
         {
             ValidationMessage.Text = "Enter a card reference and choose a color.";
+            LabelInput.Focus();
+            return;
+        }
+        try
+        {
+            if (isCreating) TrackerEngine.ParseReferences(TrackerLabel);
+        }
+        catch (ArgumentException exception)
+        {
+            ValidationMessage.Text = exception.Message;
             LabelInput.Focus();
             return;
         }

@@ -37,6 +37,8 @@ These are captures of the actual WPF application using disposable example data.
 ## What you can do
 
 - **Track each card separately.** Enter any card reference or label, choose an accent color, and optionally add a short description. There is no required card-number format.
+- **Create several trackers at once.** Separate card references with commas in New tracker. Each gets the selected color, description, and optional type. Empty items and references longer than 120 characters must be corrected before saving.
+- **Set a work type.** Add or edit an optional single-line type of up to 20 characters, such as Testing, Test Plan, Publishing, or COP. Types appear on active and historical trackers; existing trackers start with a blank type.
 - **Start and stop as you work.** One button switches between green Start and red Stop. Time accumulates across sessions; multiple timers can run when needed.
 - **See and copy totals.** Rows show hours, minutes, and seconds, plus whole minutes. End an entry to display its final reporting total. Copy hours/minutes or total minutes from its menu. Partial minutes are not rounded up.
 - **Adjust or reset time.** The green **+** and red **−** icons accept `1:30` or `90` for 90 minutes. Enter or OK saves; Escape or Cancel discards. Subtraction stops at zero. The amber reset icon clears the total and pauses the tracker.
